@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec  4 11:57:51 2023
 
 Get sequence lengths for all contigs in all samples
 
-@author: ekateria
 """
 from Bio import SeqIO
 import pandas as pd

@@ -14,7 +14,7 @@ metadata_plasmids <- metadata_plasmids %>%
 
 ## need reads_proc for this one
 
-plasmids <- read.delim("PATH_TO_MANUS_FOLDER/datasets/pOTUs_relab_renamed.tsv") %>% 
+plasmids <- read.delim("PATH_TO_MANUS_FOLDER/datasets/PTUs_relab_renamed.tsv") %>% 
   column_to_rownames("sample_id")
 
 source("PATH_TO_TOOLS/maaslin3-release/R/maaslin3.R")
@@ -99,10 +99,10 @@ antibitoics <- read.delim("PATH_TO_MANUS_FOLDER/results/diff_abund/correlation_f
   
 all_results <- kjonn %>% rbind(senter) %>% rbind(age) %>% rbind(antibitoics) %>% 
   mutate(feature = str_replace(feature, "CRCbiome.", "CRCbiome-")) %>% 
-  dplyr::rename(., pOTU = feature) %>% 
-  left_join(read.delim("PATH_TO_MANUS_FOLDER/database_to_publish/pOTUs_meta_lim1.csv")) %>% 
+  dplyr::rename(., PTU = feature) %>% 
+  left_join(read.delim("PATH_TO_MANUS_FOLDER/database_to_publish/PTUs_meta_lim1.csv")) %>% 
   filter(metadata != "reads_proc") %>% 
-  dplyr::select(pOTU, metadata, value, coef, pval_individual, qval_individual, pval_joint, model, predicted_mobility, NumARG_unique, dataset) %>% 
+  dplyr::select(PTU, metadata, value, coef, pval_individual, qval_individual, pval_joint, model, predicted_mobility, NumARG_unique, dataset) %>% 
   mutate(negLog10P = -log10(as.numeric(qval_individual)),
     significance = case_when(
       as.numeric(qval_individual) < 0.05 ~ "Significant",

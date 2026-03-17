@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov  6 09:42:33 2024
 
 Find spacers ntersect between databases
 
-@author: ekateria
 """
 
 import pandas as pd

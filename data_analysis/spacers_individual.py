@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Nov 27 14:20:45 2023
 
-Find how many spacer clusters are shared or new in an individual per each time point
+Find how many spacer clusters are shared or new in an individual 
 
-@author: ekateria
 """
 
 import pandas as pd

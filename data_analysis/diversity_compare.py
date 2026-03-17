@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 10 08:17:19 2024
 
 Diversity comparisons between MAGs and Phages
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -20,13 +18,13 @@ import os
 
 wdir='PATH_TO_MANUS_FOLDER' #set working directory
 
-prefix='MAGs_vOTUs_pOTUs' #prefix to be used for the output files
+prefix='MAGs_vOTUs_PTUs' #prefix to be used for the output files
 os.makedirs('/'.join([wdir, prefix]), exist_ok=True)
 #------------------------------------------------------------------------------------------------------------
 #Load alpha diversity
 mag_alpha=pd.read_csv('/'.join([wdir, 'datasets/MAGs_AlphaDiv.tsv']), sep='\t')
 votu_alpha=pd.read_csv('/'.join([wdir, 'datasets/vOTUs_AlphaDiv.tsv']), sep='\t')
-potu_alpha=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_AlphaDiv.tsv']), sep='\t')
+PTU_alpha=pd.read_csv('/'.join([wdir, 'datasets/PTUs_AlphaDiv.tsv']), sep='\t')
 
 #Load metadata
 
@@ -43,9 +41,9 @@ meta['final_result']=meta['final_result'].apply(lambda row: row.split('. ')[1])
 samples=pyr.read_r('/'.join([wdir, 'participant_data/sample_meta.Rds']))[None]
 mag_alpha=mag_alpha.merge(samples[['sample_id','Total_Bases_QC_ATLAS','N50']], on='sample_id',how='left')
 votu_alpha=votu_alpha.merge(samples[['sample_id','Total_Bases_QC_ATLAS','N50']], on='sample_id',how='left')
-potu_alpha=potu_alpha.merge(samples[['sample_id','Total_Bases_QC_ATLAS','N50']], on='sample_id',how='left')
+PTU_alpha=PTU_alpha.merge(samples[['sample_id','Total_Bases_QC_ATLAS','N50']], on='sample_id',how='left')
 
-alpha={'MAG':mag_alpha, 'vOTU': votu_alpha, 'pOTU':potu_alpha}
+alpha={'MAG':mag_alpha, 'vOTU': votu_alpha, 'PTU':PTU_alpha}
 sids=samples['sample_id'].tolist()
 
 def adjust_model(key1,key2, div, adj_var, alpha=alpha, sids=sids):
@@ -125,11 +123,11 @@ antib=pd.read_csv('/'.join([wdir,'antibiotics', 'Antibiotics_per_id_categorical_
 
 mag_alpha['Domain']='MAGs'
 votu_alpha['Domain']='vOTUs'
-potu_alpha['Domain']='pOTUs'
-alpha=pd.concat([mag_alpha,votu_alpha,potu_alpha])
+PTU_alpha['Domain']='PTUs'
+alpha=pd.concat([mag_alpha,votu_alpha,PTU_alpha])
 
 alpha=alpha.merge(antib[['deltaker_id','TimeFromLast']], on='deltaker_id')
-alpha.to_csv('/'.join([wdir, 'datasets/MAGsvOTUspOTUs_AlphaDiv.tsv']), sep='\t', index=False)
+alpha.to_csv('/'.join([wdir, 'datasets/MAGsvOTUsPTUs_AlphaDiv.tsv']), sep='\t', index=False)
 
 def modify_days(val):
     if pd.isna(val):
@@ -152,7 +150,7 @@ model_stats={'Domain':[],'DivInd':[],'AdjVar':[],'Rsq':[],'RsqAdj':[],'CoefDaysL
 col=0 #initialize color count
 
 adj_var='Total_Bases_QC_ATLAS'
-for p in ['MAGs','vOTUs', 'pOTUs']:
+for p in ['MAGs','vOTUs', 'PTUs']:
     fig,axs=plt.subplots(3,1,figsize=(5,10))
     ax=0
 
@@ -207,7 +205,7 @@ y_tick_values = {'age_cat': ['50-59','60-69','>=70'], 'kjonn': ['Male','Female']
 
 for c in y_tick_values:
     fig=sb.catplot(alpha.loc[alpha['Cat']==c],col='Domain',hue='Domain',y='Value',x='InvSimpson',sharey=False,
-                   sharex=False,kind='violin', col_order=['MAGs','vOTUs','pOTUs'], palette=colors, order=y_tick_values[c])
+                   sharex=False,kind='violin', col_order=['MAGs','vOTUs','PTUs'], palette=colors, order=y_tick_values[c])
     fig.set(ylabel='',xlabel='Inverse Simpson',title='')
     plt.savefig('/'.join([wdir, f'results/InvSimpson_Violin_{c}.pdf']))
 
@@ -215,7 +213,7 @@ for c in y_tick_values:
 
 fig,ax=plt.subplots(1,3)
 
-dom=['MAGs','pOTUs','vOTUs']
+dom=['MAGs','PTUs','vOTUs']
 toplot=alpha.loc[alpha['Cat'].isin(['beforeBL','senter'])]
 for i in range(len(dom)):
     sb.violinplot(toplot.loc[toplot['Domain']==dom[i]], hue='Value',y='Cat',x='InvSimpson',
@@ -235,7 +233,7 @@ plt.savefig('/'.join([wdir, 'results/InvSimpson_Violin_split_antib_senter.pdf'])
 #Load beta diversity
 mag_bray=pd.read_csv('/'.join([wdir, 'datasets/MAGs_BrayCurtis.tsv']), sep='\t')
 votu_bray=pd.read_csv('/'.join([wdir, 'datasets/vOTUs_BrayCurtis.tsv']), sep='\t')
-potu_bray=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_BrayCurtis.tsv']), sep='\t')
+PTU_bray=pd.read_csv('/'.join([wdir, 'datasets/PTUs_BrayCurtis.tsv']), sep='\t')
 
 
 def melt_bray(bc,domain):
@@ -247,9 +245,9 @@ def melt_bray(bc,domain):
 
 mag_bray=melt_bray(mag_bray,'MAGs')
 votu_bray=melt_bray(votu_bray,'vOTUs')
-potu_bray=melt_bray(potu_bray,'pOTUs')
+PTU_bray=melt_bray(PTU_bray,'PTUs')
 
-all_bray=pd.concat([mag_bray,votu_bray,potu_bray])
+all_bray=pd.concat([mag_bray,votu_bray,PTU_bray])
 all_bray=all_bray.query('BC>0') #remove compare to self
 
 all_bray['Comb']=all_bray.apply(lambda row: [row.Sample1, row.Sample2, row.Domain], axis=1)
@@ -257,7 +255,7 @@ all_bray['Comb']=all_bray['Comb'].apply(lambda row: '_'.join(list(sorted(row))))
 
 all_bray=all_bray.drop_duplicates(subset='Comb', keep='first')
 
-sb.boxplot(all_bray,x='BC',y='Domain',hue='Domain',hue_order=['MAGs', 'vOTUs', 'pOTUs'], palette=colors)
+sb.boxplot(all_bray,x='BC',y='Domain',hue='Domain',hue_order=['MAGs', 'vOTUs', 'PTUs'], palette=colors)
 plt.tight_layout()
 plt.savefig('/'.join([wdir, prefix, 'BrayCurtis_by_domains.pdf']))
 
@@ -287,7 +285,7 @@ def kruskal_pairwise(domains,all_bray=all_bray):
     
     return Kruskaldb
 
-KruskalBeta=kruskal_pairwise(['MAGs','pOTUs','vOTUs'])
+KruskalBeta=kruskal_pairwise(['MAGs','PTUs','vOTUs'])
 KruskalBeta.to_csv('/'.join([wdir, prefix, 'Kruskal_BrayCurtis.tsv']),index=False)
 
 #Compare those that had a/b within 4 months prior to baseline vs those that didn't have 
@@ -304,7 +302,7 @@ plt.tight_layout()
 plt.savefig('/'.join([wdir, prefix, 'BrayCurtis_by_domains_ABuse_4moprior.pdf']))
 
 Kruskal_ab=pd.DataFrame()
-for d in ['MAGs', 'vOTUs', 'pOTUs']:
+for d in ['MAGs', 'vOTUs', 'PTUs']:
     qbray=all_bray.loc[all_bray['Domain']==d]
     h_st,pval=kruskal_group(qbray,'beforeBL_comb','BC')
     k=pd.DataFrame.from_dict({'Domain':[f'{d}'],'Hstat': [h_st], 'Pval': [pval]})
@@ -316,7 +314,7 @@ Kruskal_ab['FDRp']=padj
 Kruskal_ab.to_csv('/'.join([wdir, prefix, 'Kruskal_BrayCurtis_domains_abuse4mo.tsv']),index=False)
 
 Kruskal_ab=pd.DataFrame()
-for d in ['MAGs', 'vOTUs', 'pOTUs']:
+for d in ['MAGs', 'vOTUs', 'PTUs']:
     qbray=all_bray.loc[all_bray['Domain']==d]
     pairs=list(comb(['Yes','No','No_Yes'],2))
     for p in pairs:

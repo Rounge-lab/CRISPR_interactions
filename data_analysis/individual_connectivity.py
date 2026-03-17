@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 31 12:13:53 2025
 
 Individual connectivity based on the MAG-target pairs
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -35,8 +33,8 @@ samples=samples.merge(meta[['deltaker_id','beforeBL','age_cat','kjonn','senter']
 
 spacers=pd.read_csv('/'.join([wdir,'datasets/spacers_manus_table_new.csv']), sep='\t')
 
-edges=spacers[['Cluster','Sample','MAG','vOTUs','pOTUs']]
-edges=pd.melt(edges, id_vars=['Cluster','MAG','Sample'], value_vars=['vOTUs','pOTUs'], var_name='domain', value_name='Taxon')
+edges=spacers[['Cluster','Sample','MAG','vOTUs','PTUs']]
+edges=pd.melt(edges, id_vars=['Cluster','MAG','Sample'], value_vars=['vOTUs','PTUs'], var_name='domain', value_name='Taxon')
 edges=edges.dropna(subset='Taxon')
 edges=edges.dropna(subset='MAG')
 
@@ -49,10 +47,10 @@ edges = edges.explode('Taxon')
 #Keep those that are in the manus
 mags=pd.read_csv('/'.join([wdir, 'datasets/MAGs_relab.tsv']),sep='\t').set_index('sample_id')
 votus=pd.read_csv('/'.join([wdir, 'datasets/vOTUs_relab.tsv']),sep='\t').set_index('sample_id')
-potus=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_relab.tsv']),sep='\t').set_index('sample_id')
+PTUs=pd.read_csv('/'.join([wdir, 'datasets/PTUs_relab.tsv']),sep='\t').set_index('sample_id')
 
 mges=votus.columns.tolist()
-mges.extend(potus.columns.tolist())
+mges.extend(PTUs.columns.tolist())
 
 edges=edges.loc[edges['Taxon'].isin(mges)]
 edges=edges.loc[edges['MAG'].isin(mags.columns.tolist())]

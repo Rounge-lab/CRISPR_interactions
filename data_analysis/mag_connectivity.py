@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct  8 14:14:26 2025
 
 Connectivity between MAGs
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -38,7 +36,7 @@ def count_distance(edges, nodes=nodes):
 
 alldist,magnodes=count_distance(edges)
 
-#Makecolmap only once for all the combinations (both votus and potus)
+#Makecolmap only once for all the combinations (both votus and PTUs)
 labels=magnodes['Label'].unique().tolist()
 colors=['#fd8d3c','#bdbdbd','#8c96c6', '#ae017e','#edf8b1', '#02818a','#666600','#9292ff',
         '#ff92ff', '#f781bf','#b4639f', '#74c476','#d7301f','#b2182b','#ffff99','#92ffff']
@@ -73,10 +71,10 @@ plt.savefig('/'.join([wdir,'results/MAG-to-MAG_connectivity/Presence_absence_tar
 
 #vOTUs
 virdist,_=count_distance(edges.loc[edges['Taxon'].str.contains('vOTU')])
-#pOTUs
+#PTUs
 plasdist,_=count_distance(edges.loc[edges['Taxon'].str.contains('plasmid')])
 
-type='pOTU'
+type='PTU'
 qdist=plasdist.copy()
 #number of connections
 tokeep=qdist.sum(axis=0)
@@ -114,7 +112,7 @@ plotdist=plotdist.loc[tokeep.index.tolist(),tokeep.index.tolist()]
 plotnodes=magnodes.loc[magnodes['Taxon'].isin(plotdist.index.tolist())]
 plotnodes=plotnodes.sort_values(by='Label', ascending=True)
 plot_clusters(plotdist.loc[plotnodes['Taxon'].tolist(),plotnodes['Taxon'].tolist()], False)
-plt.savefig('/'.join([wdir,'results/MAG-to-MAG_connectivity/Heatmap_Presence_absence_pOTU_only.pdf']))
+plt.savefig('/'.join([wdir,'results/MAG-to-MAG_connectivity/Heatmap_Presence_absence_PTU_only.pdf']))
 
 
 ##Make a boxplot for MAG connectivity to same family/other families
@@ -152,8 +150,8 @@ virconnect,virconnect_melt=connectivity(edges.loc[edges['Taxon'].str.contains('v
 virconnect['Target']='vOTU'
 virconnect_melt['Target']='vOTU'
 plasconnect, plasconnect_melt=connectivity(edges.loc[edges['Taxon'].str.contains('plasmid')])      
-plasconnect['Target']='pOTU'
-plasconnect_melt['Target']='pOTU'
+plasconnect['Target']='PTU'
+plasconnect_melt['Target']='PTU'
 
 
 allconnect=pd.concat([virconnect, plasconnect])
@@ -165,7 +163,7 @@ cats=order.index.tolist()
 cats=[c for c in cats if c!='Other']
 cats.append('Other')
 allconnect['Label']=pd.Categorical(allconnect['Label'], categories=cats, ordered=True)
-fig=sb.catplot(allconnect, kind='box', hue=None, x='SameFraction',y='Label',col='Target', col_order=['vOTU','pOTU'], color='#5fc0bf')
+fig=sb.catplot(allconnect, kind='box', hue=None, x='SameFraction',y='Label',col='Target', col_order=['vOTU','PTU'], color='#5fc0bf')
 fig.set(xlabel='Same family MAGs among connected, %',ylabel='')
 for ax in fig.axes.flat:
     for label in ax.get_yticklabels():
@@ -177,10 +175,10 @@ plt.savefig('/'.join([wdir,'results/Connectivity_MAGs_boxplots.pdf']))
 single=allconnect.loc[allconnect['Single_hit']!=0]
 single['all']=single['Same_family']+single['Single_hit']+single['Other_family']
 single=single.loc[single['all']==single['Single_hit']]
-sd=single['Target'].value_counts() #130 MAGs target individual vOTUs and 74 - pOTUs
+sd=single['Target'].value_counts() #130 MAGs target individual vOTUs and 74 - PTUs
 num_shared=len(allconnect['MAG'].unique().tolist())-len(single['MAG'].unique().tolist())
 print(f'Number of MAGs that only has individual vOTU targets: {sd.vOTU}')
-print(f'Number of MAGs that only has individual pOTU targets: {sd.pOTU}')
+print(f'Number of MAGs that only has individual PTU targets: {sd.PTU}')
 print(f'Number of MAGs that has shared targets: {num_shared}')
 
 
@@ -255,7 +253,7 @@ def add_magsp(level,magtax=magtax,edges=edges,nodes=nodes):
     return mge
 
 virtarget=add_magsp('vOTU')
-plastarget=add_magsp('pOTU')
+plastarget=add_magsp('PTU')
 
 virtarget.to_csv('/'.join([wdir, '/results/vOTUs_targeted_by_species.csv']),sep='\t', index=False)
 plastarget.to_csv('/'.join([wdir, '/results/PTUs_targeted_by_species.csv']),sep='\t', index=False)

@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep  1 10:52:53 2025
 
-Find cluster sizes for each pOTU
+Find cluster sizes for each PTU
 
-@author: ekateria
 """
 
 import pandas as pd

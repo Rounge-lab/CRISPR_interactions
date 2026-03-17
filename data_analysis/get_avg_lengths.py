@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Apr 24 15:41:08 2025
 
 Calculate average lengths for MAGs, vOTUs
 Make summary plots for taxonomy, genome lengths and completeness
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -22,7 +20,7 @@ from scipy.stats import pearsonr
 
 wdir='PATH_TO_MANUS_FOLDER' #set working directory
 
-prefix='MAGs_vOTUs_pOTUs'
+prefix='MAGs_vOTUs_PTUs'
 
 ## Get the lengths of all contigs for general dataset stats
 contigs=pd.read_csv('/'.join([wdir, 'datasets/All_contig_lengths.csv']),sep='\t')
@@ -78,24 +76,24 @@ votu_lengths.to_csv('/'.join([wdir,'datasets/vOTUs_lengths.csv']), index=False)
 
 votu_lengths['Length, bp'].describe()
 
-#Extract pOTU lengths
-potus=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_relab.tsv']),sep='\t')
-potulist=potus.columns.tolist()[1:]
-potu_fasta='PATH_TO/scapp_snakemake_wf/data/dereplication/plasmids_dereplicated_0.9.fasta'
-potu_lengths={'pOTU':[],'Length, bp':[]}
-for seq in SeqIO.parse(potu_fasta, 'fasta'):
-    potu_lengths['pOTU'].append(seq.id)
-    potu_lengths['Length, bp'].append(len(seq.seq))
+#Extract PTU lengths
+PTUs=pd.read_csv('/'.join([wdir, 'datasets/PTUs_relab.tsv']),sep='\t')
+PTUlist=PTUs.columns.tolist()[1:]
+PTU_fasta='PATH_TO/scapp_snakemake_wf/data/dereplication/plasmids_dereplicated_0.9.fasta'
+PTU_lengths={'PTU':[],'Length, bp':[]}
+for seq in SeqIO.parse(PTU_fasta, 'fasta'):
+    PTU_lengths['PTU'].append(seq.id)
+    PTU_lengths['Length, bp'].append(len(seq.seq))
     
-potu_lengths=pd.DataFrame(potu_lengths)
-potu_lengths=potu_lengths.loc[potu_lengths['pOTU'].isin(potulist)]
-potu_lengths.to_csv('/'.join([wdir,'datasets/pOTUs_lengths.csv']), index=False)
-potu_lengths['Length, bp'].describe()
+PTU_lengths=pd.DataFrame(PTU_lengths)
+PTU_lengths=PTU_lengths.loc[PTU_lengths['PTU'].isin(PTUlist)]
+PTU_lengths.to_csv('/'.join([wdir,'datasets/PTUs_lengths.csv']), index=False)
+PTU_lengths['Length, bp'].describe()
 
-##Find how many genomes are included into each MAG, vOTU and pOTU
+##Find how many genomes are included into each MAG, vOTU and PTU
 mag_numgen=pd.read_csv('/'.join([wdir,'datasets/MAGs_NumGenomes.csv']), sep='\t')
 votu_numgen=pd.read_csv('/'.join([wdir,'datasets/vOTUs_NumGenomes.csv']), sep='\t')
-potu_numgen=pd.read_csv('/'.join([wdir,'datasets/Plasmid_NumGenomes.csv']),sep='\t')
+PTU_numgen=pd.read_csv('/'.join([wdir,'datasets/Plasmid_NumGenomes.csv']),sep='\t')
 
 ##------------------------------------------------------------------------
 ##Make plots for prevalence, lengths and completeness
@@ -119,7 +117,7 @@ vir_comp=vir_comp[['new_id','completeness']].rename(columns={'new_id':'vOTU','co
 mags=mags.set_index('sample_id')
 votus=votus.set_index('sample_id')
 
-colors={'MAG':'#4385BF', 'vOTU':'#5B7571', 'pOTU':'#CEBA7D'}
+colors={'MAG':'#4385BF', 'vOTU':'#5B7571', 'PTU':'#CEBA7D'}
 
 def plot_stats(relab,length,comp,taxon,numgen,groupname,taxlev,repr_thr,genome_lims,colors=colors):
     prev=relab.copy()
@@ -227,33 +225,33 @@ vMetrics.to_csv('/'.join([wdir,prefix,'Phages_prevalence_length_completeness_met
 #-------------------------------------------------------------------------------------------------------------
 #Make a summary plot for plasmids
 
-colors={'MAG':'#4385BF', 'vOTU':'#5B7571', 'pOTU':'#CEBA7D'}
+colors={'MAG':'#4385BF', 'vOTU':'#5B7571', 'PTU':'#CEBA7D'}
 
 samples=pyr.read_r('/'.join([wdir, 'participant_data/sample_meta.Rds']))[None]
 baseline=samples['sample_id'].tolist()
 
 
-potus=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_relab.tsv']),sep='\t')
-potus=potus.set_index('sample_id')
-potu_taxon=pd.read_csv('/'.join([wdir, 'datasets/pOTU_taxonomy_IMGPR_0.9.txt']),sep=',')
-potu_taxon['host_taxonomy']=potu_taxon['host_taxonomy'].fillna('Unclassified')
-potu_taxon['Hit_family']=potu_taxon['host_taxonomy'].apply(lambda row: row.split('f__')[1] if 'f__' in row else (row if row=='Unclassified' else 'Unknown'))
-potu_taxon['Hit_family']=potu_taxon['Hit_family'].apply(lambda row: row.split(';')[0] if ';' in row else row)
-potu_taxon=potu_taxon.rename(columns={'Query':'pOTU'})
-potu_taxon=potu_taxon.query('LongestMatchPairwiseId>=90')
-potu_taxon['Query_Hit_ratio']=potu_taxon['QueryLength']/potu_taxon['Hit_length']
-potu_lengths=pd.read_csv('/'.join([wdir,'datasets/pOTUs_lengths.csv']))
+PTUs=pd.read_csv('/'.join([wdir, 'datasets/PTUs_relab.tsv']),sep='\t')
+PTUs=PTUs.set_index('sample_id')
+PTU_taxon=pd.read_csv('/'.join([wdir, 'datasets/PTU_taxonomy_IMGPR_0.9.txt']),sep=',')
+PTU_taxon['host_taxonomy']=PTU_taxon['host_taxonomy'].fillna('Unclassified')
+PTU_taxon['Hit_family']=PTU_taxon['host_taxonomy'].apply(lambda row: row.split('f__')[1] if 'f__' in row else (row if row=='Unclassified' else 'Unknown'))
+PTU_taxon['Hit_family']=PTU_taxon['Hit_family'].apply(lambda row: row.split(';')[0] if ';' in row else row)
+PTU_taxon=PTU_taxon.rename(columns={'Query':'PTU'})
+PTU_taxon=PTU_taxon.query('LongestMatchPairwiseId>=90')
+PTU_taxon['Query_Hit_ratio']=PTU_taxon['QueryLength']/PTU_taxon['Hit_length']
+PTU_lengths=pd.read_csv('/'.join([wdir,'datasets/PTUs_lengths.csv']))
 
 
-potu_prev=potus.loc[potus.index.isin(baseline)].copy()
-potu_prev[potu_prev>0]=1 #plasmid needs to be covered on at least 75% of its length by default
-potu_summary=pd.DataFrame(potu_prev.sum(axis=0)/potu_prev.shape[0]*100, columns=['Prevalence, %'])
-potu_summary=potu_summary.reset_index()
-potu_summary=potu_summary.rename(columns={'index':'pOTU'})
-potu_summary=potu_summary.merge(potu_numgen, on='pOTU', how='left')
-potu_summary=potu_summary.merge(potu_lengths, on='pOTU', how='left')
-potu_summary=potu_summary.merge(potu_taxon[['pOTU','LongestMatchPairwiseId','Query_Hit_ratio','Hit_family']],on='pOTU',how='left')
-potu_summary.loc[potu_summary['Hit_family'].isna(), 'Hit_family'] = 'No reference'
+PTU_prev=PTUs.loc[PTUs.index.isin(baseline)].copy()
+PTU_prev[PTU_prev>0]=1 #plasmid needs to be covered on at least 75% of its length by default
+PTU_summary=pd.DataFrame(PTU_prev.sum(axis=0)/PTU_prev.shape[0]*100, columns=['Prevalence, %'])
+PTU_summary=PTU_summary.reset_index()
+PTU_summary=PTU_summary.rename(columns={'index':'PTU'})
+PTU_summary=PTU_summary.merge(PTU_numgen, on='PTU', how='left')
+PTU_summary=PTU_summary.merge(PTU_lengths, on='PTU', how='left')
+PTU_summary=PTU_summary.merge(PTU_taxon[['PTU','LongestMatchPairwiseId','Query_Hit_ratio','Hit_family']],on='PTU',how='left')
+PTU_summary.loc[PTU_summary['Hit_family'].isna(), 'Hit_family'] = 'No reference'
 
 
 ### Compare the prevalence between MAGs and plasmids belonging to that family
@@ -261,7 +259,7 @@ mag_summary=pd.read_csv('/'.join([wdir,prefix,'MAG_prevalence_length_completenes
 mag_taxon=pd.read_csv('/'.join([wdir,'datasets/MAG_taxonomy_full.tsv']), sep=',')
 mag_summary=mag_summary.merge(mag_taxon[['MAG','family']], on='MAG', how='left')
 
-fams=pd.DataFrame(potu_summary['Hit_family'].unique().tolist())
+fams=pd.DataFrame(PTU_summary['Hit_family'].unique().tolist())
 fams.columns=['Hit_family']
 for ix,f in fams.iterrows():
     ms=mag_summary.loc[mag_summary['family']==f.Hit_family]
@@ -270,7 +268,7 @@ for ix,f in fams.iterrows():
         #Calculate quartiles 
         qm=ms['Prevalence, %'].describe()
         qm=qm.loc[['min','25%','50%','75%','max']]
-        p=potu_summary.loc[potu_summary['Hit_family']==f.Hit_family]
+        p=PTU_summary.loc[PTU_summary['Hit_family']==f.Hit_family]
         qp=p['Prevalence, %'].describe()
         qp=qp.loc[['min','25%','50%','75%','max']]
         cor,p=pearsonr(qp.values,qm.values)
@@ -281,11 +279,11 @@ for ix,f in fams.iterrows():
         fams.at[ix,'Corr']=np.nan
         fams.at[ix,'pval']=np.nan
 
-potu_summary=potu_summary.merge(fams[['Hit_family','Corr','pval']], on='Hit_family', how='left')
+PTU_summary=PTU_summary.merge(fams[['Hit_family','Corr','pval']], on='Hit_family', how='left')
 
 #Make labels for the plot
 
-num_repr=pd.DataFrame(potu_summary['Hit_family'].value_counts()).reset_index()
+num_repr=pd.DataFrame(PTU_summary['Hit_family'].value_counts()).reset_index()
 num_repr=num_repr.rename(columns={'count':'NumRepr'})
 num_repr['Label']=num_repr.apply(lambda row: row['Hit_family'] if row.NumRepr>=10 else 'Other', axis=1)
 
@@ -312,17 +310,17 @@ order.append(f'No reference (n={noref})')
 
 
 #Add number of representatives to the summary
-potu_summary=potu_summary.merge(num_repr[['Hit_family','Label','NumRepr']], on='Hit_family', how='left')
-potu_summary['Label']=potu_summary.apply(lambda row: f'{row.Label} (n={row.NumRepr})', axis=1)
+PTU_summary=PTU_summary.merge(num_repr[['Hit_family','Label','NumRepr']], on='Hit_family', how='left')
+PTU_summary['Label']=PTU_summary.apply(lambda row: f'{row.Label} (n={row.NumRepr})', axis=1)
 
-potu_summary=pd.read_csv('/'.join([wdir,'results',prefix,'pOTU_prevalence_query_hit_lengthratio.csv']), sep='\t')
+PTU_summary=pd.read_csv('/'.join([wdir,'results',prefix,'PTU_prevalence_query_hit_lengthratio.csv']), sep='\t')
 
 #Add info on mobility
-potumob=pd.read_csv('/'.join([wdir, 'datasets/plasmids_dereplicated_0.9_MOBtyper.txt']), sep='\t')
-potumob=potumob.rename(columns={'sample_id':'pOTU'})
-potu_summary=potu_summary.merge(potumob[['pOTU','predicted_mobility']], on='pOTU',how='left')
+PTUmob=pd.read_csv('/'.join([wdir, 'datasets/plasmids_dereplicated_0.9_MOBtyper.txt']), sep='\t')
+PTUmob=PTUmob.rename(columns={'sample_id':'PTU'})
+PTU_summary=PTU_summary.merge(PTUmob[['PTU','predicted_mobility']], on='PTU',how='left')
 
-mob_summary=potu_summary.groupby(['Label','predicted_mobility']).size().unstack(fill_value=0)
+mob_summary=PTU_summary.groupby(['Label','predicted_mobility']).size().unstack(fill_value=0)
 perc_mobility=mob_summary.div(mob_summary.sum(axis=1),axis=0)*100
 perc_mobility=perc_mobility.reset_index()
 perc_mobility['mob+conj']=100-perc_mobility['non-mobilizable']
@@ -330,11 +328,11 @@ perc_mobility['mob+conj']=100-perc_mobility['non-mobilizable']
 
 fig,ax=plt.subplots(1,5,sharey=True, figsize=(10, 7))
 
-sb.boxplot(data=potu_summary, x='Prevalence, %', y='Label', ax=ax[0],color=colors['pOTU'],order=order)
-sb.boxplot(data=potu_summary, x='genome', y='Label', ax=ax[1],color=colors['pOTU'],order=order, log_scale=True)
-sb.boxplot(data=potu_summary, x='Length, bp', y='Label', ax=ax[2], log_scale=True, color=colors['pOTU'],order=order)
-sb.barplot(data=perc_mobility, x='mob+conj', y='Label', ax=ax[3], color=colors['pOTU'],order=order)
-sb.boxplot(data=potu_summary, x='Query_Hit_ratio', y='Label', ax=ax[4],color=colors['pOTU'],order=order)
+sb.boxplot(data=PTU_summary, x='Prevalence, %', y='Label', ax=ax[0],color=colors['PTU'],order=order)
+sb.boxplot(data=PTU_summary, x='genome', y='Label', ax=ax[1],color=colors['PTU'],order=order, log_scale=True)
+sb.boxplot(data=PTU_summary, x='Length, bp', y='Label', ax=ax[2], log_scale=True, color=colors['PTU'],order=order)
+sb.barplot(data=perc_mobility, x='mob+conj', y='Label', ax=ax[3], color=colors['PTU'],order=order)
+sb.boxplot(data=PTU_summary, x='Query_Hit_ratio', y='Label', ax=ax[4],color=colors['PTU'],order=order)
 
 ax[0].set_ylabel('')
 ax[0].set_yticklabels(ax[0].get_yticklabels(),fontstyle='italic')
@@ -345,8 +343,8 @@ ax[4].set_xlabel('PTU to reference plasmid')
 
 
 plt.tight_layout()
-plt.savefig('/'.join([wdir,'results',prefix,'pOTU_prevalence_length_query_hit_lengthratio_mobility.pdf']))
-perc_mobility.to_csv('/'.join([wdir,'results',prefix,'pOTU_mobility_by_family.csv']), sep='\t')
-potu_summary.to_csv('/'.join([wdir,'results',prefix,'pOTU_prevalence_query_hit_lengthratio_mobility.csv']), sep='\t', index=False)
+plt.savefig('/'.join([wdir,'results',prefix,'PTU_prevalence_length_query_hit_lengthratio_mobility.pdf']))
+perc_mobility.to_csv('/'.join([wdir,'results',prefix,'PTU_mobility_by_family.csv']), sep='\t')
+PTU_summary.to_csv('/'.join([wdir,'results',prefix,'PTU_prevalence_query_hit_lengthratio_mobility.csv']), sep='\t', index=False)
 
 

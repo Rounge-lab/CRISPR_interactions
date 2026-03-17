@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Mar 20 13:19:45 2023
+Spearman correlation between bacteria and MGEs
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -29,14 +28,14 @@ samples=pyr.read_r('/'.join([wdir, 'participant_data/sample_meta.Rds']))[None]
 #Relative abundances
 mags=pd.read_csv('/'.join([wdir, 'datasets/MAGs_relab.tsv']),sep='\t').set_index('sample_id')
 votus=pd.read_csv('/'.join([wdir, 'datasets/vOTUs_relab.tsv']),sep='\t').set_index('sample_id')
-potus=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_relab.tsv']),sep='\t').set_index('sample_id')
+PTUs=pd.read_csv('/'.join([wdir, 'datasets/PTUs_relab.tsv']),sep='\t').set_index('sample_id')
 
 #Taxonomy
 mag_taxon=pd.read_csv('/'.join([wdir,'datasets/MAG_taxonomy_full.tsv']), sep=',')
 votu_taxon=pd.read_csv('/'.join([wdir,'datasets/vOTUs_taxonomy.csv']),sep=',')
 votu_taxon=votu_taxon.drop(columns='Unnamed: 0')
 votu_taxon=votu_taxon.rename(columns={'Scaffold':'vOTU'})
-potu_taxon=pd.read_csv('/'.join([wdir,'datasets/pOTU_taxonomy_IMGPR_0.95_modified.txt']))
+PTU_taxon=pd.read_csv('/'.join([wdir,'datasets/PTU_taxonomy_IMGPR_0.95_modified.txt']))
 
 #-----------------------------------------------------------------------------------------------
 ##Filter the data - remove technical correlations
@@ -62,7 +61,7 @@ def filter_prev(relab,domain):
 
 mags=filter_prev(mags,'MAG')
 votus=filter_prev(votus,'vOTU')
-potus=filter_prev(potus,'pOTU')
+PTUs=filter_prev(PTUs,'PTU')
 
 #Filter based on cross-correlation to other taxa within a domain
 
@@ -102,24 +101,24 @@ vc=vc.drop(columns=['vOTU_x','vOTU_y'])
 votus=votus.drop(columns=vc['Tax2'])
 
 #Find technical correlation among plasmids
-pc=rem_technical(potus)
-pc=pd.merge(pc,potu_taxon[['pOTU','Hit_family']],right_on='pOTU',left_on='Tax1')#Find their taxonomy
-pc=pd.merge(pc,potu_taxon[['pOTU','Hit_family']],right_on='pOTU',left_on='Tax2')#Find their taxonomy
+pc=rem_technical(PTUs)
+pc=pd.merge(pc,PTU_taxon[['PTU','Hit_family']],right_on='PTU',left_on='Tax1')#Find their taxonomy
+pc=pd.merge(pc,PTU_taxon[['PTU','Hit_family']],right_on='PTU',left_on='Tax2')#Find their taxonomy
 pc=pc.rename(columns={'Hit_family_x':'Family1', 'Hit_family_y':'Family2'})
-pc=pc.drop(columns=['pOTU_x','pOTU_y'])
+pc=pc.drop(columns=['PTU_x','PTU_y'])
 
-potus=potus.drop(columns=pc['Tax2'])
+PTUs=PTUs.drop(columns=pc['Tax2'])
 
 mc.to_csv('/'.join([wdir,'results/Cross_correlating_MAGs.csv']),index=False)
 vc.to_csv('/'.join([wdir,'results/Cross_correlating_vOTUs.csv']),index=False)
-pc.to_csv('/'.join([wdir,'results/Cross_correlating_pOTUs.csv']),index=False)
+pc.to_csv('/'.join([wdir,'results/Cross_correlating_PTUs.csv']),index=False)
 
 
 ##-------------------------------------------------------------------------
 #Spearman correlation between domains
 
-relabs={'MAGs':mags, 'vOTUs':votus, 'pOTUs':potus}
-taxonomy={'MAGs':mag_taxon[['MAG','species']],'vOTUs':votu_taxon[['vOTU','Family']],'pOTUs':potu_taxon[['pOTU','Hit_family']]}
+relabs={'MAGs':mags, 'vOTUs':votus, 'PTUs':PTUs}
+taxonomy={'MAGs':mag_taxon[['MAG','species']],'vOTUs':votu_taxon[['vOTU','Family']],'PTUs':PTU_taxon[['PTU','Hit_family']]}
 
 def correlate_domains(dom1,dom2, corlim, relabs=relabs):
     full=pd.concat([relabs[dom1],relabs[dom2]],axis=1,join='inner')
@@ -157,7 +156,7 @@ def correlate_domains(dom1,dom2, corlim, relabs=relabs):
 
     return spcorr, spcorr_un, spcorr_strong
 
-dompairs=[('MAGs','vOTUs'),('MAGs','pOTUs')]
+dompairs=[('MAGs','vOTUs'),('MAGs','PTUs')]
 
 for d in dompairs:
     spcorr,spcorr_un, spcorr_strong=correlate_domains(d[0],d[1],0.8)
@@ -188,7 +187,7 @@ def make_clustermap(data,hm,hv):
     ax.ax_heatmap.set_yticklabels(ax.ax_heatmap.get_yticklabels(),fontdict={'fontstyle':'italic'})
     ax.ax_heatmap.set_xticklabels(ax.ax_heatmap.get_xticklabels(),fontdict={'fontstyle':'italic'})
 
-dom1='MAGs'; dom2='pOTUs'; corlim=0.8
+dom1='MAGs'; dom2='PTUs'; corlim=0.8
 spcorr=pd.read_csv('/'.join([wdir, f'results/Relab_Spearman_correlation_{dom1}_{dom2}_square.csv'])).set_index('Unnamed: 0')
 spcorr_strong=pd.read_csv('/'.join([wdir,f'results/Relab_Spearman_correlation_{dom1}_{dom2}_AbsOver{str(corlim)}.csv']))
 
@@ -200,7 +199,7 @@ plt.savefig('/'.join([wdir,'results/Relab_Spearman_correlation_{dom1}_{dom2}_Abs
 
 ##-----------------------------------------------------------------------------------------
 #For plasmids, check negative correlations 
-dom1='MAGs'; dom2='pOTUs'
+dom1='MAGs'; dom2='PTUs'
 spcorr_un=pd.read_csv('/'.join([wdir, f'results/Relab_Spearman_correlation_{dom1}_{dom2}_melted.csv']))
 sb.histplot(spcorr_un, x='SpCorrCoef')
 spcorr_neg=spcorr_un.query('SpCorrCoef<0')
@@ -221,11 +220,11 @@ def check_tax_correspondence(corrdata, mag_taxon,vislim):
     #Remove plasmids with unknown family delineation
     corrdata=corrdata.dropna(subset='Taxonomy2')
     corrdata=corrdata.loc[~corrdata['Taxonomy2'].isin(['Unknown', 'Unclassified'])]
-    corrdata=corrdata.rename(columns={'Taxonomy2': 'pOTU family', 'family': 'MAG family'})
+    corrdata=corrdata.rename(columns={'Taxonomy2': 'PTU family', 'family': 'MAG family'})
     corrdata['MAG family']='MAG_'+corrdata['MAG family']
-    corrdata['pOTU family']='pOTU_'+corrdata['pOTU family']
+    corrdata['PTU family']='PTU_'+corrdata['PTU family']
 
-    conttab=pd.crosstab(corrdata['MAG family'], corrdata['pOTU family'])
+    conttab=pd.crosstab(corrdata['MAG family'], corrdata['PTU family'])
     #Keep rows and columns where there are more than 20 pairs in total
     sumcol=conttab.sum(axis=0)
     vistab=conttab[sumcol[sumcol>vislim].index.tolist()]
@@ -255,7 +254,7 @@ def check_tax_correspondence(corrdata, mag_taxon,vislim):
 
 vislim=100
 negconttab=check_tax_correspondence(spcorr_neg, mag_taxon, vislim)
-plt.savefig('/'.join([wdir,'results/Negative_correlations_taxonomy_conttab_MAGs_pOTUs.pdf']))
+plt.savefig('/'.join([wdir,'results/Negative_correlations_taxonomy_conttab_MAGs_PTUs.pdf']))
 
 #Find number of plasmids that belong to dif classes, which MAGs they target
 fortax=spcorr_negtail.drop_duplicates(subset='Tax2')
@@ -270,4 +269,4 @@ sb.histplot(spcorr_pos, x='SpCorrCoef')
 spcorr_postail=spcorr_un.query('SpCorrCoef>0.1')
 vislim=500
 posconttab=check_tax_correspondence(spcorr_postail, mag_taxon, vislim)
-plt.savefig('/'.join([wdir,'results/Positive_correlations_taxonomy_conttab_MAGs_pOTUs.pdf']))
+plt.savefig('/'.join([wdir,'results/Positive_correlations_taxonomy_conttab_MAGs_PTUs.pdf']))

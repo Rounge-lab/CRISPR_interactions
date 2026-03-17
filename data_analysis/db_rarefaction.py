@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Aug 25 10:32:25 2025
 
 Rarefy the databases to assess the saturation of the spacers target identification
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -133,26 +131,26 @@ ax=sb.lineplot(Rartab_vir,x='NumEntries',y='NumSpacers', estimator='mean', error
              hue=col, palette=['#6b519d','#00bf63','#af9a5b'])
 plt.savefig('/'.join([wdir, f'Rarefaction_vOTUs_by_{col}.pdf']))
 
-#Split CRCbiome-pOTUs to mobilizable, non-mobilizable and conjugative
+#Split CRCbiome-PTUs to mobilizable, non-mobilizable and conjugative
 #Change step to a 100 because of the small number of mobilizable and conjugative plasmids
-mobplas=pd.read_csv(f"{wdir.replace('db_rarefaction','')}pOTUs_mobility_ARG_summary.tsv", sep='\t')
+mobplas=pd.read_csv(f"{wdir.replace('db_rarefaction','')}PTUs_mobility_ARG_summary.tsv", sep='\t')
 
 col='Mobility'
 Rartab_plas=pd.DataFrame()
 for st in ['mobilizable','conjugative','non-mobilizable']:
     blastres,hits=read_file('CRCbiome-plasmids')
     qhits=mobplas.loc[mobplas[col]==st]
-    qhits=qhits['pOTU'].tolist()
+    qhits=qhits['PTU'].tolist()
     rartab=rarefy_db('CRCbiome-plasmids',blastres,hits,qhits,20)
     rartab[col]=st
     Rartab_plas=pd.concat([Rartab_plas,rartab])
     
-Rartab_plas.to_csv('/'.join([wdir,f'Rarefaction_pOTUs_{col}_status.csv']),sep='\t',index=False)
+Rartab_plas.to_csv('/'.join([wdir,f'Rarefaction_PTUs_{col}_status.csv']),sep='\t',index=False)
 
 ax=sb.lineplot(Rartab_plas,x='NumEntries',y='NumSpacers', estimator='mean', errorbar='sd', marker='*',
              hue=col, palette=[ '#af9a5b','#6b519d','#00bf63',], hue_order=['non-mobilizable','mobilizable','conjugative'])
 ax.set(xlim=[0,800],ylim=[0,2000])
-plt.savefig('/'.join([wdir, f'Rarefaction_pOTUs_by_{col}.pdf']))
+plt.savefig('/'.join([wdir, f'Rarefaction_PTUs_by_{col}.pdf']))
 
 
 #----------------------------------------------------------------------------------------------------------
@@ -174,7 +172,7 @@ for db in databases:
     if 'vOTU' in db:
         relab=pd.read_csv('/'.join([relabloc,'vOTUs_relab.tsv']),sep='\t').set_index('sample_id')
     else:
-        relab=pd.read_csv('/'.join([relabloc,'pOTUs_relab.tsv']),sep='\t').set_index('sample_id')
+        relab=pd.read_csv('/'.join([relabloc,'PTUs_relab.tsv']),sep='\t').set_index('sample_id')
         
     prev=relab.copy()
     prev[prev>0]=1

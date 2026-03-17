@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct 21 13:45:26 2025
 
-pOTU taxonomy delineation based on Spearman correlations
+PTU taxonomy delineation based on Spearman correlations
 
-@author: ekateria
 """
 
 import pandas as pd

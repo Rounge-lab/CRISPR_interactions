@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep 15 10:01:32 2025
 
 Make a summary for plasmid mobility and ARG load 
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -24,14 +22,14 @@ mob=pd.read_csv('/'.join([wdir, 'datasets/plasmids_dereplicated_0.9_MOBtyper.txt
 antib=pd.read_csv('/'.join([wdir,'antibiotics', 'Antibiotics_per_id_categorical_timeadded.tsv']), sep='\t')
 
 meta=pyr.read_r('/'.join([wdir, 'datasets/metadata/data_by_sample.rds']))[None]
-relab=pd.read_csv('/'.join([wdir,'datasets/pOTUs_relab.tsv']),sep='\t')
+relab=pd.read_csv('/'.join([wdir,'datasets/PTUs_relab.tsv']),sep='\t')
 
-MobSum={'pOTU':[], 'Mobility':[], 'NumARG_total':[],'NumARG_unique':[],
+MobSum={'PTU':[], 'Mobility':[], 'NumARG_total':[],'NumARG_unique':[],
                      'Num_efflux_pump':[],'Num_drug_class':[]}
 
 for _,p in mob.iterrows():
     arg=args.loc[args['Contig']==p.sample_id]
-    MobSum['pOTU'].append(p.sample_id)
+    MobSum['PTU'].append(p.sample_id)
     MobSum['Mobility'].append(p.predicted_mobility)
 
     if len(arg)>0:
@@ -48,8 +46,8 @@ for _,p in mob.iterrows():
 MobSum=pd.DataFrame(MobSum)
 
 #Keep plasmids from the manuscript dataset
-potulist=pd.read_csv('/'.join([wdir, 'datasets/pOTU_rename_key.csv']), sep='\t')
-MobSum=MobSum.loc[MobSum['pOTU'].isin(potulist['pOTU'].tolist())]
+PTUlist=pd.read_csv('/'.join([wdir, 'datasets/PTU_rename_key.csv']), sep='\t')
+MobSum=MobSum.loc[MobSum['PTU'].isin(PTUlist['PTU'].tolist())]
 
 #Count percentage of plasmids in each mobility class
 
@@ -68,7 +66,7 @@ ax[1].set(ylabel='',xlabel='Number of ARGs per PTU')
 ax[2].set(ylabel='',xlabel='Number of efflux pumps per PTU')
 ax[3].set(ylabel='',xlabel='Number of drug classes per PTU')
 
-plt.savefig('/'.join([wdir, 'results/pOTU_mobility_ARG_efflux_drugs.pdf']))
+plt.savefig('/'.join([wdir, 'results/PTU_mobility_ARG_efflux_drugs.pdf']))
 #------------------------------------------------------------------------------------
 #Statistical tests
 #Binomial test for fractions of plasmids; Null - non-mobilizable
@@ -104,7 +102,7 @@ print(pd.DataFrame(exp, index=perc['Mobility'].tolist(), columns=['Num_plasmids_
 
 #Number of ARGs adjusted for sample sequencing depth
 
-MobSum['sample_id']=MobSum['pOTU'].apply(lambda row: row.split('_')[0])
+MobSum['sample_id']=MobSum['PTU'].apply(lambda row: row.split('_')[0])
 MobSum['sample_id']=MobSum['sample_id'].apply(lambda row: row.replace('-','_'))
 MobSum=MobSum.merge(meta[['sample_id','Total_Bases_QC_ATLAS']], on='sample_id', how='left')
 
@@ -131,11 +129,11 @@ for y in ['NumARG_total', 'NumARG_unique', 'Num_efflux_pump','Num_drug_class']:
         olsres=diff_adjusted(detected.loc[detected['Mobility'].isin(gr)], y, 'Mobility', 'Total_Bases_QC_ATLAS')
         OLS_differ=pd.concat([OLS_differ, olsres])
         
-OLS_differ.to_csv('/'.join([wdir, 'results/OLS_pOTUs_ARGs_vs_mobility_onlyARGcontain.tsv']),sep='\t',index=False)
+OLS_differ.to_csv('/'.join([wdir, 'results/OLS_PTUs_ARGs_vs_mobility_onlyARGcontain.tsv']),sep='\t',index=False)
 
-MobSum.to_csv('/'.join([wdir, 'results/pOTUs_mobility_ARG_summary.tsv']),sep='\t',index=False)
+MobSum.to_csv('/'.join([wdir, 'results/PTUs_mobility_ARG_summary.tsv']),sep='\t',index=False)
 
-MobSum=pd.read_csv('/'.join([wdir, 'results/pOTUs_mobility_ARG_summary.tsv']),sep='\t')
+MobSum=pd.read_csv('/'.join([wdir, 'results/PTUs_mobility_ARG_summary.tsv']),sep='\t')
 
 
 #Get the list of all antibiotics that are detected ARGs against
@@ -154,13 +152,13 @@ def modify_days(val):
 antib['TimeFromLast']=antib['TimeFromLast'].apply(modify_days)
 
 #Overview over which plasmids are detected in which samples
-args=args.rename(columns={'Contig':'pOTU'})
+args=args.rename(columns={'Contig':'PTU'})
 relab=relab.set_index('sample_id')
 
 ARG_by_sample=pd.DataFrame({'NumPlas':[],'NumPlasARG':[],'NumARGtotal':[], 'NumARGunique':[]})
 for ix, s in relab.iterrows():
     plas=s[s>0].index.tolist()
-    plasarg=args.loc[args['pOTU'].isin(plas)]
+    plasarg=args.loc[args['PTU'].isin(plas)]
     ARG_by_sample.loc[ix,'NumPlas']=len(plas)
     ARG_by_sample.loc[ix,'NumPlasARG']=len(plasarg)
     ARG_by_sample.loc[ix,'NumARGtotal']=len(plasarg['Best_Hit_ARO'].tolist())
@@ -215,8 +213,8 @@ plt.savefig('/'.join([wdir,'results/PercPlasARG_TimeFromLast_LinReg.pdf']))
 ##get the statistics on number of plasmids detected per sample (by SCAPP)
 
 numplas=pd.read_csv('PATH_TO/scapp_snakemake_wf/data/dereplication/cluster_map.txt',sep='\t')
-#Keep only pOTUs that are in the manus
-numplas=numplas.loc[numplas['pOTU'].isin(relab.columns.tolist())]
+#Keep only PTUs that are in the manus
+numplas=numplas.loc[numplas['PTU'].isin(relab.columns.tolist())]
 numplas['sample']=numplas['genome'].apply(lambda row: row.split('_')[0])
 persam=numplas['sample'].value_counts().reset_index()
 persam['sample']=persam['sample'].apply(lambda row: row.replace('-','_'))

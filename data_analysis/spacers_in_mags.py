@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Apr 25 12:10:33 2025
 
 Make a summary of which MAG families contain CRISPRs
 
-@author: ekateria
 """
 
 import pandas as pd

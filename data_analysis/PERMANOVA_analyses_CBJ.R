@@ -11,7 +11,7 @@ jaccard_data <-
   read.delim("datasets/Individual_interactions_Jaccard_CrisprF.tsv") %>% 
   dplyr::rename("sample_id" = "X")
 
-plasmids <- read.delim("/datasets/pOTUs_Jaccard.tsv")
+plasmids <- read.delim("/datasets/PTUs_Jaccard.tsv")
 
 MAGs_AlphaDiv <- read.delim("/datasets/MAGs_AlphaDiv.tsv")
 
@@ -118,7 +118,7 @@ MAGs_Jaccard <- read.delim("datasets/MAGs_Jaccard.tsv") %>%
   as.matrix() %>% 
   as.dist()
 
-pOTUs_Jaccard <- read.delim("datasets/pOTUs_Jaccard.tsv") %>% 
+PTUs_Jaccard <- read.delim("datasets/PTUs_Jaccard.tsv") %>% 
   column_to_rownames("X") %>% 
   as.matrix() %>% 
   as.dist()
@@ -384,17 +384,17 @@ permanova_barplot_mags <- results_mags %>%
 ###############################
 
 
-results_pOTU <- run_permanova(
-  dist_mat   = pOTUs_Jaccard,
+results_PTU <- run_permanova(
+  dist_mat   = PTUs_Jaccard,
   metadata   = metadata_votus,
   vars       = vars_to_test,
   covariates = covariates,
   permutations = 999
 )
 
-results_pOTU
+results_PTU
 
-permanova_barplot_potus <- results_pOTU %>%
+permanova_barplot_PTUs <- results_PTU %>%
   mutate(group = case_when(
     variable %in% lifestyle_vars  ~ "Lifestyle",
     variable %in% diet_vars       ~ "Diet",
@@ -429,7 +429,7 @@ permanova_barplot_potus <- results_pOTU %>%
     (variable == "Nasj_cat2") ~ "Nationality",
     TRUE ~ variable))
 
-(plot_potus <- permanova_barplot_potus %>%
+(plot_PTUs <- permanova_barplot_PTUs %>%
     filter(variable != "gr") %>%
     group_by(group) %>%
     mutate(variable = fct_reorder(variable, R2)) %>%
@@ -442,7 +442,7 @@ permanova_barplot_potus <- results_pOTU %>%
     scale_x_continuous(limits = c(0, 0.025), breaks = seq(0, 0.025, by = 0.01),
                        expand = c(0, 0)) +
     scale_fill_manual(values = c(group_colors)) +
-    labs(x = "R² pOTU (PERMANOVA)",
+    labs(x = "R² PTU (PERMANOVA)",
          y = NULL,
          fill = "Variable group") +
     theme_minimal() +
@@ -451,14 +451,14 @@ permanova_barplot_potus <- results_pOTU %>%
           legend.title = element_text(size = 9), 
           axis.title.x = element_text(size = 9)))
 
-plot_potus 
+plot_PTUs 
 plot_perm_int
 plot_mags
 plot_votus
 
 
 ggsave(filename = "results/permanova_barplot_seqdmmadj_all.pdf",
-       plot = ggarrange(plot_perm_int, plot_mags, plot_votus, plot_potus, ncol=4, common.legend = T), 
+       plot = ggarrange(plot_perm_int, plot_mags, plot_votus, plot_PTUs, ncol=4, common.legend = T), 
        width = 25, height = 10, unit = "cm")
 
 

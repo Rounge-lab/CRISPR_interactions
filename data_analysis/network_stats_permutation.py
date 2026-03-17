@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 10 15:20:18 2026
 
 Network weights, connectivity and randomness
 

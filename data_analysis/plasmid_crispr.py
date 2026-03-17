@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Nov 13 09:51:29 2025
 
 Find which MGEs have CRISPR elements
 
-@author: ekateria
 """
 
 import pandas as pd

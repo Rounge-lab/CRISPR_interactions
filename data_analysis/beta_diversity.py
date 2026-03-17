@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr  3 14:59:23 2024
 
 Beta-diversity calculations 
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -23,7 +21,7 @@ from skbio.stats.ordination import pcoa
 wdir='PATH_TO_MANUS_FOLDER' #set working directory
 prefix='MAGs' #prefix to be used for the output files
 #prefix='vOTUs' #prefix to be used for the output files
-#prefix='pOTUs'
+#prefix='PTUs'
 #Load metadata--------------------------------------------------------------
 
 ####NB that beforeBL variable codes for a/b use 4 months prior to baseline, not if it was at ANY time before baseline  
@@ -72,19 +70,19 @@ def jaccard_d(data):
 
 #------------------------ 
 #Load data and calculate beta-div
-for p in ['MAGs','vOTUs','pOTUs', 'Combined']:
+for p in ['MAGs','vOTUs','PTUs', 'Combined']:
     
     if p=='Combined':
         mags=pd.read_csv('/'.join([wdir, 'datasets','MAGs_relab.tsv']), sep='\t').set_index('sample_id')
         votu=pd.read_csv('/'.join([wdir, 'datasets','vOTUs_relab.tsv']), sep='\t').set_index('sample_id')
-        potu=pd.read_csv('/'.join([wdir, 'datasets','pOTUs_relab.tsv']), sep='\t').set_index('sample_id')
+        PTU=pd.read_csv('/'.join([wdir, 'datasets','PTUs_relab.tsv']), sep='\t').set_index('sample_id')
 
         relab=mags.merge(votu, left_index=True, right_index=True)
-        relab=relab.merge(potu, left_index=True, right_index=True)
+        relab=relab.merge(PTU, left_index=True, right_index=True)
         
         prev=calc_prev(mags,'MAGs')
         vprev=calc_prev(votu,'vOTUs')
-        pprev=calc_prev(potu,'pOTUs')
+        pprev=calc_prev(PTU,'PTUs')
         
         prev=prev.merge(vprev,left_index=True,right_index=True)
         prev=prev.merge(pprev,left_index=True,right_index=True)
@@ -104,7 +102,7 @@ for p in ['MAGs','vOTUs','pOTUs', 'Combined']:
     bray.to_csv('/'.join([wdir, 'datasets', p+'_BrayCurtis.tsv']), sep='\t')
     jac.to_csv('/'.join([wdir, 'datasets', p+'_Jaccard.tsv']), sep='\t')
 
-#Metagenome_bray (mags, votus and potus combined)
+#Metagenome_bray (mags, votus and PTUs combined)
 
 ##PERMANOVA ANALYSIS
 
@@ -122,7 +120,7 @@ def calc_permanova(skdm,groups,cols):
 distances=['BrayCurtis','Jaccard']
 cols=['kjonn','age_cat','beforeBL','senter']
 
-for p in ['MAGs','vOTUs','pOTUs', 'Combined']:
+for p in ['MAGs','vOTUs','PTUs', 'Combined']:
     for d in distances:
         print(f'Performing PERMANOVA for {p}_{d}')
         dis=pd.read_csv('/'.join([wdir, 'datasets',f'{p}_{d}.tsv']), sep='\t').set_index('Unnamed: 0')

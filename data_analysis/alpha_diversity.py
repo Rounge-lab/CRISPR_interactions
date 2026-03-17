@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 20 10:36:26 2024
 
-#Relative abundance calculation and alpha diversity
+Relative abundance calculation and alpha diversity
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -25,7 +23,7 @@ from statsmodels.stats.multitest import multipletests
 wdir='PATH_TO_MANUS_FOLDER' #set working directory
 prefix='MAGs' #prefix to be used for the output files
 #prefix='vOTUs' #prefix to be used for the output files
-#prefix='pOTUs' #prefix to be used for the output files
+#prefix='PTUs' #prefix to be used for the output files
 
 #-----------------------------------------------------------------------------------------------------------
 #Load metadata        
@@ -70,7 +68,7 @@ def load_data(prefix):
         data=data.reset_index(names='sample_id')
     
         
-    elif prefix=='pOTUs':
+    elif prefix=='PTUs':
         data=pd.read_csv('/'.join([wdir, 'datasets/Plasmids_coverage_min75.tsv']), sep='\t')
         
     return data
@@ -105,7 +103,7 @@ relab.to_csv('/'.join([wdir, 'datasets',prefix+'_relab.tsv']), sep='\t', index=T
 
 relab=pd.read_csv('/'.join([wdir, 'datasets',prefix+'_relab.tsv']), sep='\t').set_index('sample_id')
 
-for p in ['MAGs','vOTUs','pOTUs']:
+for p in ['MAGs','vOTUs','PTUs']:
     relab=pd.read_csv('/'.join([wdir, 'datasets',p+'_relab.tsv']), sep='\t').set_index('sample_id')
     if 'allrelab' not in globals():
         allrelab=relab
@@ -177,7 +175,7 @@ catg=['beforeBL','age_cat','kjonn','senter']
 samples=pd.read_csv('/'.join([wdir,'datasets/data_by_samples_crispr.csv']),sep = '\t')
 
 All_OLS=pd.DataFrame()
-for p in ['MAGs','vOTUs','pOTUs','combined']:
+for p in ['MAGs','vOTUs','PTUs','combined']:
     alpha_div=pd.read_csv('/'.join([wdir, 'datasets/'+p+'_AlphaDiv.tsv']), sep='\t')
     alpha_div=alpha_div.merge(samples[['deltaker_id','Total_Bases_QC_ATLAS']], on='deltaker_id', how='left')
 

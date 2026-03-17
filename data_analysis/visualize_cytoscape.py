@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 14 15:21:12 2025
 
 Make files for cytoscape network visualization
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -17,19 +15,19 @@ spacers=pd.read_csv('/'.join([wdir,'datasets/spacers_manus_table_new.csv']), sep
 
 mag_taxon=pd.read_csv('/'.join([wdir,'datasets/MAG_taxonomy_full.tsv']), sep=',')
 vir_taxon=pd.read_csv('/'.join([wdir,'datasets/vOTUs_taxonomy.csv']),sep=',')
-potu_taxon=pd.read_csv('/'.join([wdir, 'datasets/pOTU_taxonomy_IMGPR_0.9_modified.txt']),sep=',')
+PTU_taxon=pd.read_csv('/'.join([wdir, 'datasets/PTU_taxonomy_IMGPR_0.9_modified.txt']),sep=',')
 
 #Keep only spacers that are found in mags
 spacers=spacers.dropna(subset='MAG')
 
 mags=pd.read_csv('/'.join([wdir, 'datasets/MAGs_relab.tsv']),sep='\t').set_index('sample_id')
 votus=pd.read_csv('/'.join([wdir, 'datasets/vOTUs_relab.tsv']),sep='\t').set_index('sample_id')
-potus=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_relab.tsv']),sep='\t').set_index('sample_id')
+PTUs=pd.read_csv('/'.join([wdir, 'datasets/PTUs_relab.tsv']),sep='\t').set_index('sample_id')
 
 spacers=spacers.loc[spacers['MAG'].isin(mags.columns.tolist())]
 
-edges=spacers[['Cluster','MAG','vOTUs','pOTUs']].drop_duplicates()
-edges=pd.melt(edges, id_vars=['Cluster','MAG'], value_vars=['vOTUs','pOTUs'], var_name='domain', value_name='taxon')
+edges=spacers[['Cluster','MAG','vOTUs','PTUs']].drop_duplicates()
+edges=pd.melt(edges, id_vars=['Cluster','MAG'], value_vars=['vOTUs','PTUs'], var_name='domain', value_name='taxon')
 edges=edges.dropna(subset='taxon')
 edges['taxon']=edges['taxon'].apply(lambda row: row.replace("'",''))
 edges['taxon']=edges['taxon'].apply(lambda row: row.replace("[",''))
@@ -39,7 +37,7 @@ edges = edges.explode('taxon')
 
 #remove those that target vOTUs/PTUs in CRCbiome, but not in manus:
 mges=votus.columns.tolist()
-mges.extend(potus.columns.tolist())
+mges.extend(PTUs.columns.tolist())
 edges=edges.loc[edges['taxon'].isin(mges)]
 
 #Remove edges to PTUs/vOTUs that contained crispr-cas cassettes
@@ -59,9 +57,9 @@ edges['Type']=edges['Taxon'].apply(lambda row: 'vOTU' if 'vOTU' in row else 'PTU
 
 sb.histplot(edges, x='NumInteractions')
 
-#Add info on correlations between MAGs, pOTUs and vOTUs
+#Add info on correlations between MAGs, PTUs and vOTUs
 
-pcorr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_pOTUs_melted.csv']))
+pcorr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_PTUs_melted.csv']))
 vcorr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_vOTUs_melted.csv']))
 
 #pcorr['Keep']=pcorr['SpCorrCoef'].apply(lambda row: True if row>=0.8 or row<-0.2 else False)
@@ -89,25 +87,25 @@ mag_taxon=pd.read_csv('/'.join([wdir,'datasets/MAG_taxonomy_full.tsv']), sep=','
 votu_taxon=pd.read_csv('/'.join([wdir,'datasets/vOTUs_taxonomy.csv']),sep=',')
 votu_taxon=votu_taxon.drop(columns='Unnamed: 0')
 votu_taxon=votu_taxon.rename(columns={'Scaffold':'vOTU'})
-potu_taxon=pd.read_csv('/'.join([wdir, 'datasets/pOTU_taxonomy_IMGPR_0.9.txt']),sep=',')
-potu_taxon=potu_taxon.query('LongestMatchPairwiseId>=90')
-potu_taxon['host_taxonomy']=potu_taxon['host_taxonomy'].fillna('Unclassified')
-potu_taxon['Hit_family']=potu_taxon['host_taxonomy'].apply(lambda row: row.split('f__')[1] if 'f__' in row else (row if row=='Unclassified' else 'Unknown'))
-potu_taxon['Hit_family']=potu_taxon['Hit_family'].apply(lambda row: row.split(';')[0] if ';' in row else row)
-potu_taxon=potu_taxon.rename(columns={'Query':'pOTU'})
+PTU_taxon=pd.read_csv('/'.join([wdir, 'datasets/PTU_taxonomy_IMGPR_0.9.txt']),sep=',')
+PTU_taxon=PTU_taxon.query('LongestMatchPairwiseId>=90')
+PTU_taxon['host_taxonomy']=PTU_taxon['host_taxonomy'].fillna('Unclassified')
+PTU_taxon['Hit_family']=PTU_taxon['host_taxonomy'].apply(lambda row: row.split('f__')[1] if 'f__' in row else (row if row=='Unclassified' else 'Unknown'))
+PTU_taxon['Hit_family']=PTU_taxon['Hit_family'].apply(lambda row: row.split(';')[0] if ';' in row else row)
+PTU_taxon=PTU_taxon.rename(columns={'Query':'PTU'})
 
 def make_nodes(edges, otherfilt, mag_taxon=mag_taxon):
     nodes=pd.DataFrame(pd.concat([edges['MAG'],edges['Taxon']]),columns=['Taxon'])
     nodes=nodes.drop_duplicates(keep='first')
-    nodes['Domain']=nodes['Taxon'].apply(lambda row: 'MAG' if 'MAG' in row else ('vOTU' if 'vOTU' in row else 'pOTU'))
+    nodes['Domain']=nodes['Taxon'].apply(lambda row: 'MAG' if 'MAG' in row else ('vOTU' if 'vOTU' in row else 'PTU'))
 
 
     nodes=nodes.merge(mag_taxon[['MAG','family']], left_on='Taxon',right_on='MAG', how='left')
     nodes=nodes.drop(columns=['MAG'])
     # nodes=nodes.merge(votu_taxon[['vOTU','Family']], left_on='Taxon',right_on='vOTU', how='left')
     # nodes=nodes.drop(columns='vOTU')
-    # nodes=nodes.merge(potu_taxon[['pOTU','Hit_family']], left_on='Taxon',right_on='pOTU', how='left')
-    # nodes=nodes.drop(columns='pOTU')
+    # nodes=nodes.merge(PTU_taxon[['PTU','Hit_family']], left_on='Taxon',right_on='PTU', how='left')
+    # nodes=nodes.drop(columns='PTU')
 
     nodes['Taxonomy']=nodes.apply(lambda row: row.family if row.Domain=='MAG' else None, axis=1)
 
@@ -118,7 +116,7 @@ def make_nodes(edges, otherfilt, mag_taxon=mag_taxon):
     magtoplot['Label']=magtoplot.apply(lambda row: row.Taxonomy if row.Count>=otherfilt else 'Other', axis=1)
 
     nodes=nodes.merge(magtoplot[['Taxonomy','Label']],on='Taxonomy',how='left')
-    nodes['Label']=nodes.apply(lambda row: 'vOTU' if 'vOTU' in row.Domain else ('pOTU' if 'pOTU' in row.Domain else row.Label), axis=1)
+    nodes['Label']=nodes.apply(lambda row: 'vOTU' if 'vOTU' in row.Domain else ('PTU' if 'PTU' in row.Domain else row.Label), axis=1)
     
     return nodes
 
@@ -129,9 +127,9 @@ vir_comp=pd.read_csv('PATH_TO_VIRUSES/dereplication/checkV_summary.tsv', sep='\t
 vir_rename=pd.read_csv('PATH_TO_VIRUSES/dereplication/old_to_new_ids.tsv', sep='\t')
 vir_comp=vir_comp.merge(vir_rename, left_on='virus_id',right_on='old_id', how='left')
 vir_comp=vir_comp[['new_id','completeness','provirus']].rename(columns={'new_id':'Taxon','completeness':'Completeness','provirus':'status'}).dropna(subset='Taxon')
-potu_mob=pd.read_csv('/'.join([wdir, 'datasets/plasmids_dereplicated_0.9_MOBtyper.txt']),sep='\t').rename(columns={'sample_id':'Taxon','predicted_mobility':'status'})
+PTU_mob=pd.read_csv('/'.join([wdir, 'datasets/plasmids_dereplicated_0.9_MOBtyper.txt']),sep='\t').rename(columns={'sample_id':'Taxon','predicted_mobility':'status'})
 
-status=pd.concat([vir_comp[['Taxon','status']],potu_mob[['Taxon','status']]])
+status=pd.concat([vir_comp[['Taxon','status']],PTU_mob[['Taxon','status']]])
 nodes=nodes.merge(status[['Taxon','status']], on='Taxon', how='left')
 nodes.loc[nodes['status']=='Yes','status']='Provirus'
 nodes.loc[nodes['status']=='No','status']='Virus'

@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jul  4 11:23:42 2025
 
 Make a summary for plasmids detected in CRCbiome
 
-@author: ekateria
 """
 
 import pandas as pd
@@ -16,27 +14,27 @@ import matplotlib.pyplot as plt
 
 wdir='PATH_TO_MANUS_FOLDER' #set working directory
 
-potus=pd.read_csv('/'.join([wdir,'datasets/pOTUs_lengths.csv']))
+PTUs=pd.read_csv('/'.join([wdir,'datasets/PTUs_lengths.csv']))
 
-potu_taxon=pd.read_csv('/'.join([wdir, 'datasets/pOTU_taxonomy_IMGPR_0.9.txt']),sep=',')
+PTU_taxon=pd.read_csv('/'.join([wdir, 'datasets/PTU_taxonomy_IMGPR_0.9.txt']),sep=',')
 
-potu_taxon['host_taxonomy']=potu_taxon['host_taxonomy'].fillna('Unclassified')
-potu_taxon['Hit_family']=potu_taxon['host_taxonomy'].apply(lambda row: row.split('f__')[1] if 'f__' in row else (row if row=='Unclassified' else 'Unknown'))
-potu_taxon['Hit_family']=potu_taxon['Hit_family'].apply(lambda row: row.split(';')[0] if ';' in row else row)
-potu_taxon=potu_taxon.rename(columns={'Query':'pOTU'})
-potu_taxon=potu_taxon.query('LongestMatchPairwiseId>=90') #keep only hits with>90% identity
+PTU_taxon['host_taxonomy']=PTU_taxon['host_taxonomy'].fillna('Unclassified')
+PTU_taxon['Hit_family']=PTU_taxon['host_taxonomy'].apply(lambda row: row.split('f__')[1] if 'f__' in row else (row if row=='Unclassified' else 'Unknown'))
+PTU_taxon['Hit_family']=PTU_taxon['Hit_family'].apply(lambda row: row.split(';')[0] if ';' in row else row)
+PTU_taxon=PTU_taxon.rename(columns={'Query':'PTU'})
+PTU_taxon=PTU_taxon.query('LongestMatchPairwiseId>=90') #keep only hits with>90% identity
 
 wholedb=pd.read_csv('PATH_TO_DATABASES/IMGPR/IMGPR_plasmid_data.tsv', sep='\t')
 
 #add mag taxonomy
 mag_taxon=pd.read_csv('/'.join([wdir, 'datasets/MAG_taxonomy_full.tsv']), sep=',')
 
-#Rename pOTUs (add it to pOTU_taxon and save renaming)
-for ix, p in potus.iterrows():
-    potus.at[ix,'pOTU_new']=f'CRCbiome-pOTU_{ix+1:05}'
+#Rename PTUs (add it to PTU_taxon and save renaming)
+for ix, p in PTUs.iterrows():
+    PTUs.at[ix,'PTU_new']=f'CRCbiome-PTU_{ix+1:05}'
 
-potu_key=potus[['pOTU','pOTU_new']]
-potu_key.to_csv('/'.join([wdir,'datasets/pOTU_rename_key.csv']),sep='\t', index=False)
+PTU_key=PTUs[['PTU','PTU_new']]
+PTU_key.to_csv('/'.join([wdir,'datasets/PTU_rename_key.csv']),sep='\t', index=False)
 
 def modify_conjugation(df):
     
@@ -53,13 +51,13 @@ def modify_conjugation(df):
     
     return df
     
-potu_taxon=modify_conjugation(potu_taxon)
-potu_taxon.to_csv('/'.join([wdir, 'datasets/pOTU_taxonomy_IMGPR_0.9_modified.txt']), index=False)
+PTU_taxon=modify_conjugation(PTU_taxon)
+PTU_taxon.to_csv('/'.join([wdir, 'datasets/PTU_taxonomy_IMGPR_0.9_modified.txt']), index=False)
 wholedb=modify_conjugation(wholedb)
     
-potus=potus.merge(potu_taxon[['pOTU', 'source_type','ecosystem','Hit_topology','putatively_complete','putative_phage_plasmid',
+PTUs=PTUs.merge(PTU_taxon[['PTU', 'source_type','ecosystem','Hit_topology','putatively_complete','putative_phage_plasmid',
                               'conjugation','origin_of_transfer']],
-                  on='pOTU',how='left')
+                  on='PTU',how='left')
 
 def split_ecos(df, col):
     assoc=df[col].str.split(';', expand=True)
@@ -69,28 +67,28 @@ def split_ecos(df, col):
     
     return df
 
-potus=split_ecos(potus,'ecosystem')
+PTUs=split_ecos(PTUs,'ecosystem')
 wholedb=split_ecos(wholedb,'ecosystem')
 
-potus.to_csv('/'.join([wdir,'datasets/pOTUs_db_summary.csv']), index=False)
-potus=pd.read_csv('/'.join([wdir,'datasets/pOTUs_db_summary.csv']))
+PTUs.to_csv('/'.join([wdir,'datasets/PTUs_db_summary.csv']), index=False)
+PTUs=pd.read_csv('/'.join([wdir,'datasets/PTUs_db_summary.csv']))
 
 #Exclude those that are not in the manus dataset
 
-relab=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_relab.tsv']),sep='\t')
+relab=pd.read_csv('/'.join([wdir, 'datasets/PTUs_relab.tsv']),sep='\t')
 relab=relab.set_index('sample_id')
 
 sums=relab.sum(axis=0).reset_index()
-sums.columns=['pOTU','sum']
+sums.columns=['PTU','sum']
 torem=sums.query('sum==0') #all plasmids are mapping to the samples
 
 #Make a descriptive summary of our databases
 
-def make_summary(cols, potus=potus, wholedb=wholedb):
+def make_summary(cols, PTUs=PTUs, wholedb=wholedb):
     
     Summary=pd.DataFrame()
     for c in cols:
-        csum=potus[c].value_counts()
+        csum=PTUs[c].value_counts()
         csum=pd.DataFrame(csum).reset_index().rename(columns={'index':'Value',c:'Count'})
         
         if 'Hit_' in c:
@@ -122,15 +120,15 @@ def make_summary(cols, potus=potus, wholedb=wholedb):
         
     return Summary
 
-cols=potus.columns.tolist()[2:]  
+cols=PTUs.columns.tolist()[2:]  
 Summary=make_summary(cols)
 
 Summary=Summary[['Column','Value','Count','CRCbiomedb_prop','Wholedb_prop', 'Binomial_p_greater','Binomial_p_twosided']]
-Summary.to_csv('/'.join([wdir,'datasets/pOTUs_db_summary_Counts.csv']), index=False)
+Summary.to_csv('/'.join([wdir,'datasets/PTUs_db_summary_Counts.csv']), index=False)
 
 #Plot the values
 
-Summary=pd.read_csv('/'.join([wdir,'datasets/pOTUs_db_summary_Counts.csv']))
+Summary=pd.read_csv('/'.join([wdir,'datasets/PTUs_db_summary_Counts.csv']))
 
 #Prepare for plotting
 
@@ -165,30 +163,30 @@ plt.xlabel('Fraction of database records,%')
 sb.scatterplot(data=fp.loc[fp['Database']=='Wholedb_prop'], y='Value', x='Proportion', 
            color='k', edgecolor='k', marker='*', s=200,legend=False)
 
-plt.savefig('/'.join([wdir,'pOTUs_withRef_source_proportions_ONLY_L2.pdf']))  
+plt.savefig('/'.join([wdir,'PTUs_withRef_source_proportions_ONLY_L2.pdf']))  
 
 ##Find if there is a correspondence between Spearman correlation predictions and taxonomy delineation
 
-potu_taxon=pd.read_csv('/'.join([wdir, 'datasets/pOTU_taxonomy_IMGPR_0.9_modified.txt']),sep=',')
-potu_corr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_pOTUs_square.csv']),sep=',')
-potu_corr=potu_corr.rename(columns={'Unnamed: 0':'MAG'})
-potu_corr=potu_corr.set_index('MAG')
-#Keep only potus with known family delineation and those that are in baseline samples
-potu_taxon=potu_taxon.loc[potu_taxon['pOTU'].isin(potus['pOTU'].tolist())]
-potu_taxon=potu_taxon.loc[~potu_taxon['Hit_family'].isin(['Unknown','Unclassified'])]
-cols=potu_taxon['pOTU'].tolist()
+PTU_taxon=pd.read_csv('/'.join([wdir, 'datasets/PTU_taxonomy_IMGPR_0.9_modified.txt']),sep=',')
+PTU_corr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_PTUs_square.csv']),sep=',')
+PTU_corr=PTU_corr.rename(columns={'Unnamed: 0':'MAG'})
+PTU_corr=PTU_corr.set_index('MAG')
+#Keep only PTUs with known family delineation and those that are in baseline samples
+PTU_taxon=PTU_taxon.loc[PTU_taxon['PTU'].isin(PTUs['PTU'].tolist())]
+PTU_taxon=PTU_taxon.loc[~PTU_taxon['Hit_family'].isin(['Unknown','Unclassified'])]
+cols=PTU_taxon['PTU'].tolist()
 #filter the list to keep only those that are >20% prevalent
-cols=[c for c in cols if c in potu_corr.columns.tolist()]
-potu_corr=potu_corr[cols]
+cols=[c for c in cols if c in PTU_corr.columns.tolist()]
+PTU_corr=PTU_corr[cols]
 
-#Find strongest positively correlated MAG for each pOTU
+#Find strongest positively correlated MAG for each PTU
 Corr_df=pd.DataFrame()
-for p in potu_corr:
-    mag=potu_corr.loc[potu_corr[p]==potu_corr[p].max()].index.tolist()
-    cor=pd.DataFrame({'pOTU':[p],'MAG':mag,'Corr':[potu_corr[p].max()]})
+for p in PTU_corr:
+    mag=PTU_corr.loc[PTU_corr[p]==PTU_corr[p].max()].index.tolist()
+    cor=pd.DataFrame({'PTU':[p],'MAG':mag,'Corr':[PTU_corr[p].max()]})
     Corr_df=pd.concat([Corr_df,cor])
                       
-Corr_df=Corr_df.merge(potu_taxon[['pOTU','Hit_family']], on='pOTU',how='left')
+Corr_df=Corr_df.merge(PTU_taxon[['PTU','Hit_family']], on='PTU',how='left')
 Corr_df=Corr_df.merge(mag_taxon[['MAG','family']], on='MAG',how='left')
 
 Corr_df['correspondence']=Corr_df.apply(lambda row: 'correspond' if row.Hit_family==row.family else 'do not correspond', axis=1)
@@ -212,13 +210,13 @@ order.append(f'Other (n={other})')
 #Add number of representatives to the summary
 Corr_df=Corr_df.merge(num_repr[['Hit_family','Label','NumRepr']], on='Hit_family', how='left')
 Corr_df['Label']=Corr_df.apply(lambda row: f'{row.Label} (n={row.NumRepr})', axis=1)
-Corr_df.to_csv('/'.join([wdir, 'results/Family_delineation_correspondence_pOTUs_MAGs_SpCor.csv']),index=False)
+Corr_df.to_csv('/'.join([wdir, 'results/Family_delineation_correspondence_PTUs_MAGs_SpCor.csv']),index=False)
 
 fig=sb.boxplot(Corr_df, x='Label', y='Corr',hue='correspondence', hue_order=['correspond', 'do not correspond'],
               palette=['#ace1a5', '#eac0bf'], order=order)
 plt.xticks(rotation=90, fontstyle='italic')
 fig.set(xlabel='',ylabel='Highest Spearman correlation', ylim=[0, 1])
-plt.savefig('/'.join([wdir, 'results/Family_delineation_correspondence_pOTUs_MAGs_SpCor.pdf']))
+plt.savefig('/'.join([wdir, 'results/Family_delineation_correspondence_PTUs_MAGs_SpCor.pdf']))
 
 #Make a crosstab between family and correspondence
 crosstab=pd.crosstab(Corr_df['Label'],Corr_df['correspondence'])
@@ -228,9 +226,9 @@ crosstab['prop_no']=crosstab['do not correspond']/(crosstab['correspond']+crosst
 crosstab=crosstab.sort_values(by='prop_yes',ascending=True)
 ax=crosstab[['prop_yes','prop_no']].plot(kind='barh', stacked=True, color=['#5895a8','#a4a8a8'], legend=False)
 plt.yticks(fontstyle= 'italic')
-plt.xlabel('Proportion pOTUs, %')
+plt.xlabel('Proportion PTUs, %')
 plt.ylabel('')
-plt.savefig('/'.join([wdir,'results/Family_delineation_correspondence_pOTUs_MAGs.pdf']))
+plt.savefig('/'.join([wdir,'results/Family_delineation_correspondence_PTUs_MAGs.pdf']))
 
 #Check if there is higher correlation between those that correspond than those that do not correspond
 def kruskal_group(data,cat_col,y):
@@ -256,21 +254,21 @@ for f in order:
         KruskalCorr=pd.concat([KruskalCorr,kr])
 _, padj, _, _ = multipletests(KruskalCorr['Pval'], method='fdr_bh')
 KruskalCorr['FDRp']=padj
-KruskalCorr.to_csv('/'.join([wdir, 'results/Family_delineation_correspondence_pOTUs_MAGs_SpCor_KruskalWallis.csv']),index=False)
+KruskalCorr.to_csv('/'.join([wdir, 'results/Family_delineation_correspondence_PTUs_MAGs_SpCor_KruskalWallis.csv']),index=False)
 
 ##------------------------------------------
-#for each host family (most prevalent pOTU in each family) find closely correlated MAGs and their delineation and plot
+#for each host family (most prevalent PTU in each family) find closely correlated MAGs and their delineation and plot
 
-potu_summary=pd.read_csv('/'.join([wdir,'results/MAGs_vOTUs_pOTUs/pOTU_prevalence_query_hit_lengthratio.csv']), sep='\t')
+PTU_summary=pd.read_csv('/'.join([wdir,'results/MAGs_vOTUs_PTUs/PTU_prevalence_query_hit_lengthratio.csv']), sep='\t')
 
 #Get correlation matrix
-potu_corr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_pOTUs_square.csv']),sep=',')
-potu_corr=potu_corr.rename(columns={'Unnamed: 0':'MAG'})
-potu_corr=potu_corr.set_index('MAG')
+PTU_corr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_PTUs_square.csv']),sep=',')
+PTU_corr=PTU_corr.rename(columns={'Unnamed: 0':'MAG'})
+PTU_corr=PTU_corr.set_index('MAG')
 
-#Find most prevalent pOTUs with each host delineation
+#Find most prevalent PTUs with each host delineation
 
-taxfam=potu_summary['Hit_family'].unique().tolist()
+taxfam=PTU_summary['Hit_family'].unique().tolist()
 taxfam=[t for t in taxfam if t not in ['No reference', 'Unclassified','Unknown','Other']]
 taxfam=[t for t in taxfam if 'CAG' not in t]
 taxfam=[t for t in taxfam if 'U' not in t]
@@ -278,7 +276,7 @@ taxfam=[t for t in taxfam if 'U' not in t]
 
 Most_prev=pd.DataFrame()
 for fam in taxfam:
-    qfam=potu_summary.loc[potu_summary['Hit_family']==fam]
+    qfam=PTU_summary.loc[PTU_summary['Hit_family']==fam]
     mostprev=qfam.loc[qfam['Prevalence, %']==max(qfam['Prevalence, %'])]
     Most_prev=pd.concat([Most_prev,mostprev])
     
@@ -286,8 +284,8 @@ Most_prev=Most_prev.drop_duplicates(subset='Hit_family')
     
 Most_prev=Most_prev.loc[Most_prev['Prevalence, %']>=20]
 
-plist=Most_prev['pOTU'].tolist()
-corr_toplot=potu_corr[plist]
+plist=Most_prev['PTU'].tolist()
+corr_toplot=PTU_corr[plist]
 
 mags_toplot=[]
 for p in plist:
@@ -303,30 +301,30 @@ fig.set_yticklabels(fig.get_yticklabels(),fontstyle='italic')
 fig.set_xlabel('')
 fig.set_ylabel('')
 
-plt.savefig('/'.join([wdir,'results/MostPrevalent_pOTUs_to_MAGs_SpearmanCorr.pdf']))
+plt.savefig('/'.join([wdir,'results/MostPrevalent_PTUs_to_MAGs_SpearmanCorr.pdf']))
 
 
 #Find strongest correlation to unknown hosts
-potu_taxon=pd.read_csv('/'.join([wdir, 'datasets/pOTU_taxonomy_IMGPR_0.9_modified.txt']),sep=',')
-potu_corr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_pOTUs_square.csv']),sep=',')
-potu_corr=potu_corr.rename(columns={'Unnamed: 0':'MAG'})
-potu_corr=potu_corr.set_index('MAG')
-#Keep only potus with known family delineation and those that are in baseline samples
-potu_taxon=potu_taxon.loc[potu_taxon['pOTU'].isin(potus['pOTU'].tolist())]
-potu_taxon=potu_taxon.loc[potu_taxon['Hit_family'].isin(['Unknown','Unclassified'])]
-cols=potu_taxon['pOTU'].tolist()
+PTU_taxon=pd.read_csv('/'.join([wdir, 'datasets/PTU_taxonomy_IMGPR_0.9_modified.txt']),sep=',')
+PTU_corr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_PTUs_square.csv']),sep=',')
+PTU_corr=PTU_corr.rename(columns={'Unnamed: 0':'MAG'})
+PTU_corr=PTU_corr.set_index('MAG')
+#Keep only PTUs with known family delineation and those that are in baseline samples
+PTU_taxon=PTU_taxon.loc[PTU_taxon['PTU'].isin(PTUs['PTU'].tolist())]
+PTU_taxon=PTU_taxon.loc[PTU_taxon['Hit_family'].isin(['Unknown','Unclassified'])]
+cols=PTU_taxon['PTU'].tolist()
 #filter the list to keep only those that are >20% prevalent
-cols=[c for c in cols if c in potu_corr.columns.tolist()]
-potu_corr=potu_corr[cols]
+cols=[c for c in cols if c in PTU_corr.columns.tolist()]
+PTU_corr=PTU_corr[cols]
 
-#Find strongest positively correlated MAG for each pOTU
+#Find strongest positively correlated MAG for each PTU
 Corr_df=pd.DataFrame()
-for p in potu_corr:
-    mag=potu_corr.loc[potu_corr[p]==potu_corr[p].max()].index.tolist()
-    cor=pd.DataFrame({'pOTU':[p],'MAG':mag,'Corr':[potu_corr[p].max()]})
+for p in PTU_corr:
+    mag=PTU_corr.loc[PTU_corr[p]==PTU_corr[p].max()].index.tolist()
+    cor=pd.DataFrame({'PTU':[p],'MAG':mag,'Corr':[PTU_corr[p].max()]})
     Corr_df=pd.concat([Corr_df,cor])
                       
-Corr_df=Corr_df.merge(potu_taxon[['pOTU','Hit_family']], on='pOTU',how='left')
+Corr_df=Corr_df.merge(PTU_taxon[['PTU','Hit_family']], on='PTU',how='left')
 Corr_df=Corr_df.merge(mag_taxon[['MAG','family']], on='MAG',how='left')
 
 sb.boxplot(Corr_df, y='family',x='Corr')

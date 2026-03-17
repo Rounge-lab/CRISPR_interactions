@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Dec 30 14:56:17 2025
 
 Spacers heterogeneity - in how many different mOTUs are they detected
 
-@author: ekateria
 """
 import pandas as pd
 import seaborn as sb

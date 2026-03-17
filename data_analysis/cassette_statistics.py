@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Aug 30 11:32:32 2023
 
 Find which CRISPR cassettes were detected in the final dataset samples and get some stats
 
-@author: ekateria
 """
 
 import pandas as pd
