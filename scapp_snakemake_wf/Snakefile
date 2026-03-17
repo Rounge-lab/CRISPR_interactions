@@ -1,0 +1,285 @@
+import pandas as pd
+import os
+
+configfile: "config/config.yaml"
+
+sampleTable=pd.read_csv(config["atlas_wf"]+"samples.tsv", index_col=0, sep = '\t')
+
+## Select samples
+samples=list(sampleTable.index)
+
+ids=[0.9, 0.95, 0.99]
+blast_db=['PLSDB','IMGPR']
+
+targets=['Covered_percent','Avg_fold']
+
+
+rule all:
+    input:
+        #SCAPP
+        expand("data/SCAPP/{sample}/assembly_graph.confident_cycs.fasta", sample = samples),
+        expand("data/SCAPP/{sample}/plasmids_renamed.fasta", sample = samples),
+        #Dereplication
+        expand("data/dereplication/{sample}.flag", sample = samples),
+        expand("data/dereplication/dedupe_{id}.flag", id=ids),
+        expand("data/dereplication/plasmids_dereplicated_{id}.fasta", id=ids),
+        expand("data/dereplication/plasmids_final_{id}.fasta", id=ids),
+        #BLAST
+        expand("data/BLASTRes/blastres_{db}_{id}.txt", id=ids, db=blast_db),
+        expand("data/BLASTRes/Summary_{db}_{id}.txt", id=ids, db=blast_db),
+        #Mapping
+        expand("data/BBMap/coverage/{sample}_covstats.txt", sample = samples),
+        expand('data/BBMap/BBMap_{tar}.csv',tar=targets),
+        #Typing
+        expand("data/MOBSuite/plasmids_dereplicated_{id}_MOBtyper.txt",id=ids),
+        #ARG detection
+        expand("data/RGI/plasmids_dereplicated_{id}_includeloose.flag",id=ids)
+
+rule scapp:
+    input:
+        graph=config["atlas_wf"]+"{sample}/assembly/assembly_graph.fastg",
+        align=config["atlas_wf"]+"{sample}/sequence_alignment/{sample}.bam"
+    output:
+        output_file="data/SCAPP/{sample}/assembly_graph.confident_cycs.fasta"
+    params:
+        logging="INFO",
+        out_dir="data/SCAPP/{sample}",
+        kmer=55,
+        length=1000
+    benchmark:
+        "benchmarks/SCAPP/{sample}.tsv"
+    conda:
+        "envs/scapp.yaml"
+    threads:
+        10
+    shell:
+        """
+            #rm -r {params.out_dir}
+
+            scapp \
+                -g {input.graph} \
+                -b {input.align} \
+                -o {params.out_dir} \
+                -k {params.kmer} \
+                -p {threads} \
+                -l {params.length} 
+
+        """
+
+rule rename_plasmids:
+    input:
+        infile="data/SCAPP/{sample}/assembly_graph.confident_cycs.fasta"
+    output:
+        outfile="data/SCAPP/{sample}/plasmids_renamed.fasta",
+    params:
+        seqname="P",
+        samname="{sample}"
+    shell:
+        """
+            workflow/scripts/rename_plasmids.py \
+            -i {input.infile} \
+            -o {output.outfile} \
+            -s {params.seqname} \
+            -n {params.samname}
+
+        """
+
+rule combine_plasmids:
+    input: 
+        plasmids="data/SCAPP/{sample}/plasmids_renamed.fasta"
+    output: 
+        flag=temp("data/dereplication/{sample}.flag")
+    params:
+        fasta_all="data/dereplication/plasmids_combined.fasta"
+    threads:
+        5
+    shell: 
+        """
+            cat {input.plasmids} >> {params.fasta_all}
+            touch {output.flag}
+        """
+
+rule dereplication:
+    input:
+        flag=expand("data/dereplication/{sample}.flag", sample=samples)
+    output:
+        doneflag="data/dereplication/dedupe_{id}.flag"
+    params:
+        id=lambda wildcards: wildcards.id,
+        wordsize=8,
+        infile="data/dereplication/plasmids_combined.fasta",
+        outfile="data/dereplication/plasmids_dereplicated_{id}.fasta",
+        clustermap="data/dereplication/plasmids_dereplicated_{id}_clustermap.txt",
+        mem=1000
+    threads:
+        10
+    conda:
+        "envs/bbmap.yaml"
+    shell:
+        """
+            dedupe.sh in={params.infile} \
+            out={params.outfile} \
+            threads={threads} minidentity={params.id} \
+            csf={params.clustermap}
+            
+            touch {output.doneflag}
+        """
+
+
+rule blast_plasmids:
+    input:
+        infile="data/dereplication/plasmids_dereplicated_{id}.fasta"
+    output:
+        res="data/BLASTRes/blastres_{db}_{id}.txt"
+    params:
+        id=lambda wildcards: wildcards.id,
+        bldb=lambda wildcards: config[wildcards.db],
+        max_target=1
+    conda:
+        "envs/blast.yaml"
+    shell:
+        """
+            if [ ! -f {params.bldb}.nin ]; then
+                makeblastdb -in {params.bldb} -dbtype nucl -out {params.bldb}
+            fi
+
+        blastn -db {params.bldb}  -query {input.infile} \
+        -out {output.res} \
+        -max_target_seqs {params.max_target} \
+        -outfmt "6 qseqid sallseqid pident length qlen mismatch gapopen evalue"
+
+        """
+
+rule summarize_blast:
+    input:
+        infile="data/BLASTRes/blastres_{db}_{id}.txt"
+    output:
+        outfile="data/BLASTRes/Summary_{db}_{id}.txt"
+    params:
+        id=lambda wildcards: wildcards.id,
+        bldb=lambda wildcards: config[wildcards.db],
+        metadata=lambda wildcards: config["Metadata_"+wildcards.db]
+    log:
+        "logs/blastsum_{db}_{id}.log"
+    
+    shell:
+        """
+           workflow/scripts/summarize_blast.py \
+           -i {input.infile} \
+           -o {output.outfile}\
+           -m {params.metadata}\
+           &> {log}
+        """
+
+rule map_reference:
+    input:
+        r1=config["atlas_wf"]+"{sample}/sequence_quality_control/{sample}_QC_R1.fastq.gz",
+        r2=config["atlas_wf"]+"{sample}/sequence_quality_control/{sample}_QC_R2.fastq.gz",
+        ref="data/dereplication/plasmids_dereplicated_0.9.fasta"
+    output:
+        covstats="data/BBMap/coverage/{sample}_covstats.txt"
+    params:
+        scafstats="data/BBMap/coverage/{sample}_scafstats.txt",
+        covhist="data/BBMap/coverage/{sample}_covhist.txt",
+        basecov="data/BBMap/coverage/{sample}_basecov.txt",
+        bincov="data/BBMap/coverage/{sample}_bincov.txt",
+        paired_only = 't',
+        min_id = 0.9
+    benchmark:
+        "benchmarks/BBMap/{sample}.tsv"
+    conda:
+        "envs/bbmap.yaml"
+    threads:
+        4
+    log:
+        "log/BBMap/{sample}.log"
+    resources:
+        mem = 60, 
+        java_mem = int(60 * 0.85) 
+    shell:
+        """
+        bbwrap.sh nodisk=t \
+        ref={input.ref} \
+        in={input.r1},{input.r2} \
+        covstats={output.covstats} \
+        covhist={params.covhist} \
+        basecov={params.basecov} \
+        bincov={params.bincov} \
+        scafstats={params.scafstats} \
+        threads={threads} \
+        pairedonly={params.paired_only} \
+        minid={params.min_id} \
+        maxindel=1000 \
+        ambiguous=all \
+        sam=1.3 \
+        local=t \
+        -Xmx{resources.java_mem}G \
+        2> {log}
+        """
+
+rule summarize_bbmap:
+    input:
+        sam=expand("data/BBMap/coverage/{sample}_covstats.txt", sample=samples)
+    output:
+        outfile='data/BBMap/BBMap_{tar}.csv'
+    params:
+        workdir='data/BBMap/coverage',
+        target=lambda wildcards: wildcards.tar
+    shell:
+        """
+
+        workflow/scripts/summarize_bbmap.py \
+        -w {params.workdir} \
+        -t {params.target} \
+        -o {output.outfile}
+
+        """
+
+rule mob_suite:
+    input:
+        infile="data/dereplication/plasmids_dereplicated_{id}.fasta"
+    output:
+        outfile="data/MOBSuite/plasmids_dereplicated_{id}_MOBtyper.txt"
+    params:
+        id=lambda wildcards: wildcards.id
+    conda:
+        "envs/mobsuite.yaml"
+    shell:
+        """
+            mob_typer --multi --infile {input.infile} --out_file {output.outfile}
+        """
+
+rule rgi_local_db:
+    conda:
+        "envs/rgi.yaml"
+    params:
+        db=config["CARD"]
+    shell:
+        """
+        if [ ! -d "./localDB" ]; then
+            rgi load --card_json {params.db} --local
+        fi
+            
+        """
+
+rule rgi:  
+    input:
+        infile="data/dereplication/plasmids_dereplicated_{id}.fasta"
+    output:
+        flag="data/RGI/plasmids_dereplicated_{id}_includeloose.flag"
+    params:
+        id=lambda wildcards: wildcards.id,
+        outfile="data/RGI/plasmids_dereplicated_{id}_ARGs_includeloose"
+    threads:
+        10
+    conda:
+        "envs/rgi.yaml"
+    shell:
+        """
+        rgi main --input_sequence {input.infile} \
+            --output_file {params.outfile} --local \
+                --num_threads {threads} --clean --include_loose \
+                    --low_quality
+        
+        touch {output.flag}
+        """

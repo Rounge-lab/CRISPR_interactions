@@ -1,0 +1,8 @@
+atlas_wf: "PATH_TO_CONTIGS"
+"CRCbiome-vOTUs": "PATH_TO_CRCbiome-vOTUs"
+"CRCbiome-plasmids": "PATH_TO_CRCbiome-plasmids"
+"PLSDB": "PATH_TO_PLSDB"
+"IMGPR": "PATH_TO_IMGPR"
+"CRISPRCas-db": "PATH_TO_CRISPRCas-db"
+"SpacerDB": "PATH_TO_SpacerDB"
+"Inphared": "PATH_TO_Inphared"

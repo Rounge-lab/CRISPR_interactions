@@ -1,0 +1,197 @@
+
+import pandas as pd
+
+configfile: "config/config.yaml"
+
+sampleTable=pd.read_csv(config["atlas_wf"]+"samples.tsv", index_col=0, sep = '\t')
+
+## Select samples
+samples=list(sampleTable.index)
+databases=["CRCbiome-vOTUs", "CRCbiome-plasmids", "PLSDB", "IMGPR", "CRISPRCas-db", "SpacerDB", "Inphared"]
+
+rule all:
+    input:
+        expand("data/CCtyper/{sample}/crisprs_all.tab", sample = samples),
+        expand("data/CCtyper/{sample}/crisprs_all_filtered.tab", sample = samples),
+        expand("data/CCtyper/{sample}/crisprs_all_filtered.pkl", sample = samples),
+        expand("data/CCtyper/{sample}/spacers_to_blast.txt", sample = samples),
+        expand("data/CCtyper/{sample}/filtered_spacers.fasta", sample = samples),
+        #Combine spacers and dereplication
+        expand("data/dereplication/{sample}.flag", sample=samples),
+        "data/dereplication/spacers_renamed.fasta",
+        "data/dereplication/cdhit.flag",
+        "data/dereplication/spacers_final.fasta",
+        #BLAST dereplicated
+        expand("data/BLASTRes_dereplicated/blastres_{database}.txt", database=databases),
+        #Filter BLAST
+        expand("logs/blastfilt_{database}.log", database=databases)
+
+rule cctyper:
+    input:
+        contigs=config["atlas_wf"]+"{sample}/{sample}_contigs.fasta"
+    output:
+        crisprs="data/CCtyper/{sample}/crisprs_all.tab"
+    params:
+        logging="INFO",
+        out_dir="data/CCtyper/{sample}"
+    benchmark:
+        "benchmarks/CCtyper/{sample}.tsv"
+    conda:
+        "envs/cctyper.yaml"
+    threads:
+        2
+    shell:
+        """
+            rm -r {params.out_dir}
+
+            cctyper \
+                -t {threads} \
+                --prodigal meta \
+                --log_lvl {params.logging} \
+                {input.contigs} \
+                {params.out_dir}
+        """
+
+rule filter_crispr:
+    input:
+        crispr="data/CCtyper/{sample}/crisprs_all.tab"
+    output:
+        tabfile="data/CCtyper/{sample}/crisprs_all_filtered.tab",
+        pickle="data/CCtyper/{sample}/crisprs_all_filtered.pkl",
+        for_blast="data/CCtyper/{sample}/spacers_to_blast.txt"
+    log:
+        "logs/CCtyper/{sample}.log"
+    threads:
+        1
+    shell:
+        "workflow/scripts/filter_add_proximity.py -w {input.crispr} &>> {log}"
+
+rule filter_spacers:
+    input:
+        tofilter="data/CCtyper/{sample}/spacers_to_blast.txt"
+    output:
+        res="data/CCtyper/{sample}/filtered_spacers.fasta",
+    threads:
+        10
+    shell:
+        """
+
+        ./workflow/scripts/filter_spacers.sh \
+            -i {input.tofilter} \
+        
+        """
+
+rule combine_spacers:
+    input: 
+        spacers="data/CCtyper/{sample}/filtered_spacers.fasta"
+    output: 
+        flag=temp("data/dereplication/{sample}.flag")
+    params:
+        fasta_all="data/dereplication/spacers_combined.fasta"
+    threads:
+        5
+    shell:
+        """
+            cat {input.spacers} >> {params.fasta_all}
+            touch {output.flag}
+        """
+
+rule rename_spacers:
+    input:
+        flag=expand("data/dereplication/{sample}.flag", sample=samples)
+    output:
+        outfile="data/dereplication/spacers_renamed.fasta",
+    params:
+        infile="data/dereplication/spacers_combined.fasta",
+        seqname="Sp",
+    shell:
+        """
+            workflow/scripts/rename_spacers.py \
+            -i {params.infile} \
+            -o {output.outfile} \
+            -s {params.seqname} 
+
+        """
+
+rule dereplication:
+    input:
+        flag=expand("data/dereplication/{sample}.flag", sample=samples),
+    output:
+        doneflag="data/dereplication/cdhit.flag"
+    params:
+        id=0.99,
+        wordsize=8,
+        infile="data/dereplication/spacers_renamed.fasta"
+        outfile="data/dereplication/spacers_dereplicated.fasta",
+        mem=1200
+    threads:
+        10
+    conda:
+        "envs/cdhit.yaml"
+    shell:
+        """
+            cd-hit-est -i {input.infile} -o {params.outfile} -c {params.id} -n {params.wordsize} -T {threads} -M {params.mem} -r 1
+            touch {output.doneflag}
+        """
+
+rule rename_dereplicated:
+    input:
+        flag="data/dereplication/cdhit.flag"
+    output:
+        outfile="data/dereplication/spacers_final.fasta"
+    params:
+        infile="data/dereplication/spacers_dereplicated.fasta",
+        tag="spacer_cctyper"
+    shell:
+        """
+            workflow/scripts/rename_dereplicated.py \
+            -i {params.infile} \
+            -o {output.outfile} \
+            -t {params.tag}
+
+        """
+
+rule blast_dereplicated:
+    input:
+        infile="data/dereplication/spacers_final.fasta"
+    output:
+        res="data/BLASTRes_dereplicated/blastres_{database}.txt"
+    params:
+        bldb=lambda wildcards: config[wildcards.database],
+        task="blastn-short"
+    log:
+        "logs/blastn_spacers_{database}.log"
+    conda:
+        "envs/blast.yaml"
+    threads: 
+        20
+    shell:
+        """
+            if [ ! -f {params.bldb}.ndb ]; then
+                makeblastdb -in {params.bldb} -dbtype nucl -out {params.bldb}
+            fi
+
+        blastn -task {params.task} -db {params.bldb}  -query {input.infile} \
+        -out {output.res} \
+        -outfmt "6 qseqid sallseqid pident length qlen mismatch gap qseq sseq evalue" \
+        -num_threads {threads} &>> {log}
+
+        """
+
+rule filter_dereplicated:
+    input:
+        infile="data/BLASTRes_dereplicated/blastres_{database}.txt"
+    output:
+        outfile=temp("logs/blastfilt_{database}.log")
+    params:
+        minid=99,
+        len_ratio=95
+    shell:
+        """
+        workflow/scripts/filter_blast.py \
+            -i {input.infile} \
+            -m {params.minid} \
+            -r {params.len_ratio}
+
+        touch {output.outfile}
+        """
