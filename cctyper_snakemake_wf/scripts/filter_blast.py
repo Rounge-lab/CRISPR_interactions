@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 26 16:11:00 2023
 
 Filter BLAST results
 
-@author: p1068-ekateria
 """
 
 import argparse

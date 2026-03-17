@@ -1,4 +1,4 @@
-name: /ess/p1068/cluster/CRCbiome/shared/envs/snakemake_condas/scapp
+name: scapp
 channels:
   - bioconda
   - conda-forge

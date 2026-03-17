@@ -1,4 +1,4 @@
-name: /cluster/p/p1068/cluster/CRCbiome/shared/envs/snakemake_condas/bbmap
+name: bbmap
 channels:
   - bioconda
   - conda-forge
