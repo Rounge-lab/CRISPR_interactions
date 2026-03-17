@@ -1,4 +1,6 @@
-This is the collection of scripts used for the "CRISPR-Cas immune repertoires as an ecological record of bacterial interactions with mobile genetic elements in the human gut" by Avershina et al, 2026 [preprint](https://www.biorxiv.org)
+# CRISPR_interactions
+
+This is the collection of scripts used for the **"CRISPR-Cas immune repertoires as an ecological record of bacterial interactions with mobile genetic elements in the human gut"** by Avershina et al, 2026 [preprint](https://www.biorxiv.org)
 
 ---
 
@@ -12,7 +14,9 @@ This repository contains code and data processing workflows used for the extende
 ## Repository Structure
 
 ```cctyper_snakemake_wf/ ```: Snakemake workflow for CRISPR-Cas data generation using [CRISPRCasTyper](https://github.com/Russel88/CRISPRCasTyper)
+
 ```scapp_snakemake_wf/ ```:  Snakemake workflow for plasmid data generation using [SCAPP](https://github.com/Shamir-Lab/SCAPP)
+
 ```data_analysis/ ```: Scripts used for processing of generated data
 
 ---
