@@ -47,6 +47,6 @@ This repository contains code and data processing workflows used for the extende
 
 ## Contact
 
-Ekaterina Avershina
-University of Oslo
-ekateria@uio.no
+Ekaterina Avershina<br> 
+University of Oslo<br>
+Email: ekateria@uio.no

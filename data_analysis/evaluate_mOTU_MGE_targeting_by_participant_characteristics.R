@@ -55,8 +55,8 @@ rm(tmp)
 ## Relevant vOTUs and PTUs
 derep_table_vOTUs <- read_csv("PATH_TO_MANUS_FOLDER/datasets/viral_contigs_list_organized_onlymanus_votus.csv", col_types = cols()) %>% 
   mutate(genome_sample = str_remove(Contig, "_.*")) 
-derep_table_pOTUs <- read_tsv("PATH_TO_MANUS_FOLDER/datasets/pOTU_rename_key.csv", col_types = cols()) %>% 
-  mutate(genome_sample = str_remove(pOTU, "_.*"))
+derep_table_PTUs <- read_tsv("PATH_TO_MANUS_FOLDER/datasets/PTU_rename_key.csv", col_types = cols()) %>% 
+  mutate(genome_sample = str_remove(PTU, "_.*"))
 
 ## List of spacer targets
 spacers_manus_table <- read_tsv("PATH_TO_MANUS_FOLDER/datasets/spacers_manus_table.csv", col_types = cols()) %>% 
@@ -66,12 +66,12 @@ spacers_manus_table <- read_tsv("PATH_TO_MANUS_FOLDER/datasets/spacers_manus_tab
   select(-Plasmids) %>% 
   distinct() %>% 
   select(-c(participant_id, sample_type, MAG, kjonn, age_invitation, senter, localization,final_result)) %>% 
-  pivot_longer(c(vOTUs,pOTUs), values_to = "targets", names_to = "target_type") %>% 
+  pivot_longer(c(vOTUs,PTUs), values_to = "targets", names_to = "target_type") %>% 
   mutate(targets = str_remove(targets, "^\\[") %>% 
            str_remove("\\]$") %>% 
            str_remove_all("\\'")) %>% 
   separate_longer_delim(cols = targets, delim = ", ") %>%
-  mutate(manus_target = targets %in% c(derep_table_pOTUs$pOTU,
+  mutate(manus_target = targets %in% c(derep_table_PTUs$PTU,
                                        derep_table_vOTUs$new_id)) %>% 
   mutate(targets = ifelse(manus_target, targets, NA)) %>% 
   distinct() %>% 
@@ -210,8 +210,8 @@ host_char_targeting_tests <-
     }) %>% 
       bind_rows()
   })) %>% 
-  left_join(derep_table_pOTUs %>% 
-              select(targets = pOTU, new_name = pOTU_new), by = "targets") %>% 
+  left_join(derep_table_PTUs %>% 
+              select(targets = PTU, new_name = PTU_new), by = "targets") %>% 
   mutate(targets = ifelse(is.na(new_name), targets, new_name)) %>% 
   select(-new_name)
 

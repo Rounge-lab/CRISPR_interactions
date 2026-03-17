@@ -23,7 +23,7 @@ virlist=vircrispr['Contig'].unique().tolist()
 
 #Exclude those that are not detected in the manus
 
-relab=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_relab.tsv']),sep='\t')
+relab=pd.read_csv('/'.join([wdir, 'datasets/PTUs_relab.tsv']),sep='\t')
 vrelab=pd.read_csv('/'.join([wdir, 'datasets/vOTUs_relab.tsv']),sep='\t')
 
 relab=relab.set_index('sample_id')

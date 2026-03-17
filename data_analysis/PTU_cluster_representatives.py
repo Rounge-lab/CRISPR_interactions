@@ -17,23 +17,23 @@ wdir='PATH_TO_MANUS_FOLDER' #set working directory
 clustermap=pd.read_csv('PATH_TO/scapp_snakemake_wf/data/dereplication/cluster_map.txt', 
                        sep='\t',header=None)
 
-clustermap.columns=['genome','pOTU','Identity','Length','Plasmid length','Evalue']
+clustermap.columns=['genome','PTU','Identity','Length','Plasmid length','Evalue']
 
 clustermap.to_csv('PATH_TO/scapp_snakemake_wf/data/dereplication/cluster_map.txt', 
                        sep='\t',index=False)
 
-num_plasmids=clustermap.groupby(['pOTU'])['genome'].count().reset_index()
+num_plasmids=clustermap.groupby(['PTU'])['genome'].count().reset_index()
 num_plasmids.to_csv('/'.join([wdir,'datasets/Plasmid_NumGenomes.csv']),sep='\t',index=False)
-clustermap.to_csv('/'.join([wdir,'datasets/pOTU_Clustermap.csv']),sep='\t',index=False)
+clustermap.to_csv('/'.join([wdir,'datasets/PTU_Clustermap.csv']),sep='\t',index=False)
 
 ##get the statistics on number of plasmids detected per sample (by SCAPP)
 
 numplas=pd.read_csv('PATH_TO/scapp_snakemake_wf/data/dereplication/cluster_map.txt',sep='\t')
-relab=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_relab.tsv']),sep='\t')
+relab=pd.read_csv('/'.join([wdir, 'datasets/PTUs_relab.tsv']),sep='\t')
 relab=relab.set_index('sample_id')
 
-#Keep only pOTUs that are in the manus
-numplas=numplas.loc[numplas['pOTU'].isin(relab.columns.tolist())]
+#Keep only PTUs that are in the manus
+numplas=numplas.loc[numplas['PTU'].isin(relab.columns.tolist())]
 numplas['sample']=numplas['genome'].apply(lambda row: row.split('_')[0])
 persam=numplas['sample'].value_counts().reset_index()
 persam['sample']=persam['sample'].apply(lambda row: row.replace('-','_'))

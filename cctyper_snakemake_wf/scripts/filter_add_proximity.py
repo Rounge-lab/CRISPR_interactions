@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-@author: p1068-ekateria
+Filter CRISPRs based on the number of repeats, and add info on proximity to cas genes
+
 """
 import argparse
 import pandas as pd

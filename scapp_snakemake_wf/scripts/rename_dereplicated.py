@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 26 11:52:58 2023
 
 Rename dereplicated sequences
 
-@author: p1068-ekateria
 """
 import argparse
 import pandas as pd

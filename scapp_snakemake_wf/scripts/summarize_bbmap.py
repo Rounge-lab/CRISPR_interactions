@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep  4 09:47:38 2024
 
 Make a summary table for plasmids coverage
 
-@author: p1068-ekateria
 """
 
 import pandas as pd

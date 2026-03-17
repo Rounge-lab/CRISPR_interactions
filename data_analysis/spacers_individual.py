@@ -25,13 +25,13 @@ spacers=pd.read_csv('/'.join([wdir,'datasets/spacers_manus_table.csv']),sep='\t'
 ## Get number of spacers with/without targets detected in individual
 #----------------------------------------------------------------------------
 
-potutab=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_relab.tsv']), sep='\t').set_index('sample_id')
+PTUtab=pd.read_csv('/'.join([wdir, 'datasets/PTUs_relab.tsv']), sep='\t').set_index('sample_id')
 votutab=pd.read_csv('/'.join([wdir, 'datasets/vOTUs_relab.tsv']), sep='\t').set_index('sample_id')
-potulen=pd.read_csv('/'.join([wdir, 'datasets/pOTUs_lengths.csv']), sep=',')
+PTUlen=pd.read_csv('/'.join([wdir, 'datasets/PTUs_lengths.csv']), sep=',')
 votulen=pd.read_csv('/'.join([wdir, 'datasets/vOTUs_lengths.csv']), sep=',')
 
-reltabs={'pOTUs':potutab,'vOTUs':votutab}
-lengths={'pOTUs':potulen,'vOTUs':votulen}
+reltabs={'PTUs':PTUtab,'vOTUs':votutab}
+lengths={'PTUs':PTUlen,'vOTUs':votulen}
 
 def individuality_target(tartype, reltabs=reltabs, lengths=lengths, spacers=spacers):
     tarsp=spacers.dropna(subset=tartype)
@@ -78,12 +78,12 @@ virspacers.to_csv('/'.join([wdir,'results/vOTU_spacers_targets_individuality.csv
 
 fig=sb.scatterplot(virspacers,x='PopulationNorm',y='IndividualityNorm', size=.05, legend=False)
 
-plasspacers=individuality_target('pOTUs')
+plasspacers=individuality_target('PTUs')
 plasspacers=plasspacers.query('TotalNumTargets>0') #drop those spacers where targets are only found in a total population, and not in manus samples
 plasspacers['IndividualityScore']=1-plasspacers['PopulationNumTargets']/plasspacers['TotalNumTargets']
 plasspacers['IndividualityNorm']=plasspacers['IndivNumTargets']/plasspacers['IndivDatabase']*10**6 #number of targets per 1MBp database
 plasspacers['PopulationNorm']=plasspacers['PopulationNumTargets']/plasspacers['PopulationDatabase']*10**6 #number of targets per 1MBp database
-plasspacers.to_csv('/'.join([wdir,'results/pOTU_spacers_targets_individuality.csv']),sep='\t',index=False)
+plasspacers.to_csv('/'.join([wdir,'results/PTU_spacers_targets_individuality.csv']),sep='\t',index=False)
 
 fig=sb.scatterplot(plasspacers,x='PopulationNorm',y='IndividualityNorm', size=.05)
 
@@ -93,7 +93,7 @@ sb.scatterplot(plasspacers,x='PopulationNorm',y='IndividualityNorm',size=0.2,mar
 plt.savefig('/'.join([wdir,'results/Spacers_Individuality_Norm.pdf']))
 
 virspacers['Type']='vOTU'
-plasspacers['Type']='pOTU'
+plasspacers['Type']='PTU'
 
 alltargets=pd.concat([virspacers,plasspacers], ignore_index=True)
 toplot=alltargets[['Cluster','Spacers','Sample','Type','IndividualityNorm','PopulationNorm']].melt(id_vars=['Cluster','Spacers','Sample','Type'],var_name='Level',value_name='NumTargets')
@@ -105,8 +105,8 @@ plt.savefig('/'.join([wdir,'results/Spacers_Individuality_NumberOfHits_perMB.pdf
 h_st,pval=kruskal_group(toplot.loc[toplot['Type']=='vOTU'],'Level','NumTargets') 
 print(f'Kruskal-Wallis for vOTUs: H={h_st:.2f},pval={pval:.3f}')
 
-h_st,pval=kruskal_group(toplot.loc[toplot['Type']=='pOTU'],'Level','NumTargets') 
-print(f'Kruskal-Wallis for pOTUs: H={h_st:.2f},pval={pval:.3f}')
+h_st,pval=kruskal_group(toplot.loc[toplot['Type']=='PTU'],'Level','NumTargets') 
+print(f'Kruskal-Wallis for PTUs: H={h_st:.2f},pval={pval:.3f}')
 
 ## Make a contingency table for the individuality of spacers
 
@@ -123,7 +123,7 @@ def or_chi2(tartype, alltargets=alltargets, spacers=spacers):
     expected=pd.DataFrame(expected,index=crtab.index.tolist(),columns=crtab.columns.tolist())
     return OR,chi2,p_chi2,crtab,expected
 
-tartype='pOTU'
+tartype='PTU'
 OR,chi2,p_chi2,crtab,expected=or_chi2(tartype)
 
 print('----------------------------------')
@@ -185,13 +185,13 @@ def individ_vs_individ(tartype, ranind, reltabs=reltabs, spacers=spacers, sample
 
 ranind=10
 virindsp=individ_vs_individ('vOTUs',ranind)
-plasindsp=individ_vs_individ('pOTUs',ranind)
+plasindsp=individ_vs_individ('PTUs',ranind)
 
 virindsp['Delta'] = virindsp['IndivNumTargets_perGBseq'] - virindsp['RandomIndNumTargets_Median_perGBseq']
 plasindsp['Delta'] = plasindsp['IndivNumTargets_perGBseq'] - plasindsp['RandomIndNumTargets_Median_perGBseq']
 
 virindsp.to_csv('/'.join([wdir, f'results/vOTU_spacers_targets_individ_vs_individ_{ranind}_random_ind.csv']), sep='\t', index=False)
-plasindsp.to_csv('/'.join([wdir, f'results/pOTU_spacers_targets_individ_vs_individ_{ranind}_random_ind.csv']), sep='\t', index=False)
+plasindsp.to_csv('/'.join([wdir, f'results/PTU_spacers_targets_individ_vs_individ_{ranind}_random_ind.csv']), sep='\t', index=False)
 
 virindsp['Sum'] = virindsp['IndivNumTargets'] + virindsp['RandomIndNumTargets_Median']  # exclude those that don't have any targets
 plasindsp['Sum'] = plasindsp['IndivNumTargets'] + plasindsp['RandomIndNumTargets_Median']  # exclude those that don't have any targets
@@ -211,7 +211,7 @@ plt.ylim([-2, 8])
 plt.savefig('/'.join([wdir, f'results/vOTU_spacers_targets_individ_vs_individ_{ranind}_random_ind.pdf']))
 
 make_plot(plasindsp.query('Sum>0'))
-plt.savefig('/'.join([wdir, f'results/pOTU_spacers_targets_individ_vs_individ_{ranind}_random_ind.pdf']))
+plt.savefig('/'.join([wdir, f'results/PTU_spacers_targets_individ_vs_individ_{ranind}_random_ind.pdf']))
 
 
 mges = pd.concat([plasindsp, virindsp])
@@ -229,7 +229,7 @@ def find_stats(indsp, tartype):
 
 
 find_stats(virindsp, 'vOTUs')
-find_stats(plasindsp, 'pOTUs')
+find_stats(plasindsp, 'PTUs')
 find_stats(pd.concat([plasindsp, virindsp]), 'MGE')
 
 
@@ -257,8 +257,8 @@ print(f'H={h_st:.2f}; p={pval:.2f}')
 
 
 plasindsp = pd.melt(
-    plasindsp[['Cluster','Sample','pOTUs','IndivNumTargets_perGBseq','RandomIndNumTargets_Median_perGBseq']],
-    id_vars=['Cluster','Sample','pOTUs'],
+    plasindsp[['Cluster','Sample','PTUs','IndivNumTargets_perGBseq','RandomIndNumTargets_Median_perGBseq']],
+    id_vars=['Cluster','Sample','PTUs'],
     var_name='Group',
     value_name='NumTargets'
 )
