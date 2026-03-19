@@ -50,3 +50,8 @@ This repository contains code and data processing workflows used for the extende
 Ekaterina Avershina<br> 
 University of Oslo<br>
 Email: ekateria@uio.no
+<br>
+<br>
+Trine B Rounge<br> 
+University of Oslo<br>
+Email: t.b.rounge@uio.no
