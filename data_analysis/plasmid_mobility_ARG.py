@@ -133,9 +133,6 @@ OLS_differ.to_csv('/'.join([wdir, 'results/OLS_PTUs_ARGs_vs_mobility_onlyARGcont
 
 MobSum.to_csv('/'.join([wdir, 'results/PTUs_mobility_ARG_summary.tsv']),sep='\t',index=False)
 
-MobSum=pd.read_csv('/'.join([wdir, 'results/PTUs_mobility_ARG_summary.tsv']),sep='\t')
-
-
 #Get the list of all antibiotics that are detected ARGs against
 all_antib=list(set(args['Antibiotic'].str.split('; ').explode().tolist()))
 all_antib=[a for a in all_antib if type(a).__name__!='float']

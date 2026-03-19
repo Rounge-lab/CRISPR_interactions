@@ -25,11 +25,11 @@ wdir='PATH_TO_MANUS_FOLDER'
 
 meta=pd.read_csv('/'.join([wdir,'participant_data/screening_data.tsv']), sep='\t')
 meta['beforeBL'] = pd.Categorical(meta['beforeBL'], categories=['Yes','No'], ordered=True)
-meta['kjonn'] = pd.Categorical(meta['kjonn'], categories=['Male','Female'], ordered=True)
+meta['sex'] = pd.Categorical(meta['kjonn'], categories=['Male','Female'], ordered=True)
 meta['age_cat'] = pd.Categorical(meta['age_cat'], categories=['50-59','60-69','>=70'], ordered=True)
 
 samples=pyr.read_r('/'.join([wdir, 'participant_data/sample_meta.Rds']))[None]
-samples=samples.merge(meta[['deltaker_id','beforeBL','age_cat','kjonn','senter']],on='deltaker_id',how='left')
+samples=samples.merge(meta[['deltaker_id','beforeBL','age_cat','sex','senter']],on='deltaker_id',how='left')
 
 spacers=pd.read_csv('/'.join([wdir,'datasets/spacers_manus_table_new.csv']), sep='\t')
 
@@ -103,7 +103,7 @@ fig.set(yscale='log')
 #---------------------------------------------------------------------------
 
 numint=pd.read_csv('/'.join([wdir,'datasets/Individual_interactions_NumPerInd_CrisprF.csv']),sep='\t')
-numint=numint.merge(samples[['sample_id','age_cat','beforeBL','kjonn','senter','Total_Bases_QC_ATLAS']],
+numint=numint.merge(samples[['sample_id','age_cat','beforeBL','sex','center','Total_Bases_QC_ATLAS']],
                     on='sample_id', how='left')
 
 #add info on DMMs to the samples
@@ -125,7 +125,7 @@ def diff_adjusted(data, y, col, adj):
 
 OLS_differ=pd.DataFrame()
 
-for gr in ['beforeBL','age_cat','kjonn','senter','dmm']:
+for gr in ['beforeBL','age_cat','sex','center','dmm']:
     olsres=diff_adjusted(numint, 'NumInt', gr, 'Total_Bases_QC_ATLAS')
     OLS_differ=pd.concat([OLS_differ, olsres])
         
@@ -193,7 +193,7 @@ def calc_permanova(skdm,groups,cols):
     return perm_res
     
 
-cols=['kjonn','age_cat','beforeBL','senter','dmm']
+cols=['sex','age_cat','beforeBL','center','dmm']
 
 jacdist=pd.read_csv('/'.join([wdir, 'datasets','Individual_interactions_Jaccard_CrisprF.tsv']), sep='\t').set_index('Unnamed: 0')
 
@@ -205,7 +205,7 @@ jacdist.columns=[c.replace('-','_') for c in jacdist.columns.tolist()]
 
 skdis=DistanceMatrix(np.ascontiguousarray(jacdist.values), ids=jacdist.index.to_list())
 groups=pd.DataFrame({'sample_id':jacdist.index.tolist()})
-groups=groups.merge(samples[['sample_id','deltaker_id','beforeBL','age_cat','kjonn','senter']], on='sample_id', how='left')
+groups=groups.merge(samples[['sample_id','deltaker_id','beforeBL','age_cat','sex','center']], on='sample_id', how='left')
 groups=groups.merge(dmm,on='sample_id',how='left')
 groups=groups.rename(columns={'gr':'dmm'})
 
@@ -215,7 +215,7 @@ dis_perm.to_csv('/'.join([wdir, 'results/Individual_targets_Jaccard_PERMANOVA_Cr
 
 ##Plot clustermap grouping the data
 
-col='kjonn'
+col='sex'
 labels=groups[col].unique().tolist()
 colors=['#a5c0de','#b71c80']
 colmap=dict(zip(labels,colors))

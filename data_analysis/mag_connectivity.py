@@ -223,7 +223,7 @@ for ix, v in votu_connect.iterrows():
 
 votu_connect['NumFamCat']=votu_connect['NumConnectedFamilies'].apply(lambda row: 'intrafamily' if row==1 else 'interfamily')
 
-#####Calculate fraction of multiple families vs one family for each mobility class; binomial p-value afterwards
+#####Calculate fraction of multiple families vs one family for each mobility class
 votufam=votu_connect.groupby('checkV')['NumFamCat'].value_counts().reset_index()
 votufam=votufam.pivot(index='checkV',columns='NumFamCat',values='count')
 votufam['Fraction']=votufam['interfamily']/(votufam['intrafamily']+votufam['interfamily'])*100
