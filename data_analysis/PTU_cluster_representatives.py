@@ -14,18 +14,6 @@ import matplotlib.pyplot as plt
 
 wdir='PATH_TO_MANUS_FOLDER' #set working directory
 
-clustermap=pd.read_csv('PATH_TO/scapp_snakemake_wf/data/dereplication/cluster_map.txt', 
-                       sep='\t',header=None)
-
-clustermap.columns=['genome','PTU','Identity','Length','Plasmid length','Evalue']
-
-clustermap.to_csv('PATH_TO/scapp_snakemake_wf/data/dereplication/cluster_map.txt', 
-                       sep='\t',index=False)
-
-num_plasmids=clustermap.groupby(['PTU'])['genome'].count().reset_index()
-num_plasmids.to_csv('/'.join([wdir,'datasets/Plasmid_NumGenomes.csv']),sep='\t',index=False)
-clustermap.to_csv('/'.join([wdir,'datasets/PTU_Clustermap.csv']),sep='\t',index=False)
-
 ##get the statistics on number of plasmids detected per sample (by SCAPP)
 
 numplas=pd.read_csv('PATH_TO/scapp_snakemake_wf/data/dereplication/cluster_map.txt',sep='\t')
