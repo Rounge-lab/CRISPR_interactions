@@ -9,7 +9,6 @@ import pandas as pd
 import pyreadr as pyr
 import seaborn as sb
 import numpy as np
-from scipy import stats
 import matplotlib.pyplot as plt
 
 wdir='PATH_TO_MANUS_FOLDER' #set working directory
@@ -142,7 +141,7 @@ def correlate_domains(dom1,dom2, corlim, relabs=relabs):
     spcorr_un=spcorr_un.merge(tax2, on='Tax2', how='left')
 
     plt.plot(figsize=(4,6))
-    sb.distplot(spcorr_un['SpCorrCoef'],hist=True)
+    sb.histplot(spcorr_un, x='SpCorrCoef')
     plt.tight_layout()
     spcorr_un.to_csv('/'.join([wdir,f'results/Relab_Spearman_correlation_{dom1}_{dom2}_melted.csv']),index=False)
 

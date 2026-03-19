@@ -12,7 +12,6 @@ import seaborn as sb
 from scipy.stats import pearsonr
 import scipy.stats as stats
 import matplotlib.pyplot as plt
-from statsmodels.stats.multitest import multipletests
 import random
 
 

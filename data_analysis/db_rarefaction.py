@@ -39,7 +39,7 @@ def get_refs(db,wdir=wdir):
 for db in dblist:
     get_refs(db)
 
-#Read file and keep only those clusters that are in 1813 samples from the manus
+#Read the file and keep only those clusters that are in samples from the manus
 clusters=pd.read_csv(clustersloc,sep='\t')
 def read_file(db,bldir=bldir,clusters=clusters):
     f=pd.read_csv('/'.join([bldir,f'blastres_{db}_minid99_lr95.txt']),sep=',')
@@ -47,10 +47,10 @@ def read_file(db,bldir=bldir,clusters=clusters):
     hits=f['hit'].tolist()
     return f,hits
 
+#Rarefy database entries and check how many hits we would get with each db size
+
 dbs={'CRCbiome-vOTUs':['CRCbiome-vOTUs_final'],'CRCbiome-plasmids':['CRCbiome-plasmids90'], 'Inphared':['Inphared'],
      'PLSDB':['PLSDB'], 'IMGPR':['IMGPR'],'CRISPRCas-db':['CRISPRCasdb'],'SpacerDB':['SpacerDB']}
-
-#Rarefy database entries and check how many hits we would get with each db size
 
 random.seed=45 #set a seed to generate 10 random seeds for rarefaction
 seeds=[random.randint(1,1000) for _ in range(10)]
@@ -152,7 +152,6 @@ ax=sb.lineplot(Rartab_plas,x='NumEntries',y='NumSpacers', estimator='mean', erro
 ax.set(xlim=[0,800],ylim=[0,2000])
 plt.savefig('/'.join([wdir, f'Rarefaction_PTUs_by_{col}.pdf']))
 
-
 #----------------------------------------------------------------------------------------------------------
 #Split data randomly, remove all vOTUs/PTUs that are only present in one group and 
 # search the spacers of this group in the database
@@ -209,8 +208,8 @@ ax=sb.lineplot(Rartab,x='NumEntries',y='NumSpacers', estimator='mean', errorbar=
 
 Fulltab=pd.read_csv('/'.join([wdir,'Rarefaction_all_NumSpacers.csv']),sep='\t')
 
-Rartab['Db']=Rartab['Db'].str.replace('Us','Us_IndivExc')
-Rartab['Db']=Rartab['Db'].str.replace('mids','mids_IndivExc')
+Rartab['Db']=Rartab['Db'].str.replace('vOTUs','vOTUs_IndivExc')
+Rartab['Db']=Rartab['Db'].str.replace('plasmids','plasmids_IndivExc')
 
 Fulltab=pd.concat([Fulltab,Rartab])
 

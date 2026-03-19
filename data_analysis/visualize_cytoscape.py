@@ -62,10 +62,6 @@ sb.histplot(edges, x='NumInteractions')
 pcorr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_PTUs_melted.csv']))
 vcorr=pd.read_csv('/'.join([wdir, 'results/Relab_Spearman_correlation_MAGs_vOTUs_melted.csv']))
 
-#pcorr['Keep']=pcorr['SpCorrCoef'].apply(lambda row: True if row>=0.8 or row<-0.2 else False)
-#pcorr=pcorr.loc[pcorr['Keep']==True]
-
-
 def add_corr(edges,corr,letter):
     corr['comb']=corr['Tax1']+'_vs_'+ corr['Tax2']
     edges=edges.merge(corr[['comb','SpCorrCoef']],on='comb', how='left')
@@ -102,10 +98,6 @@ def make_nodes(edges, otherfilt, mag_taxon=mag_taxon):
 
     nodes=nodes.merge(mag_taxon[['MAG','family']], left_on='Taxon',right_on='MAG', how='left')
     nodes=nodes.drop(columns=['MAG'])
-    # nodes=nodes.merge(votu_taxon[['vOTU','Family']], left_on='Taxon',right_on='vOTU', how='left')
-    # nodes=nodes.drop(columns='vOTU')
-    # nodes=nodes.merge(PTU_taxon[['PTU','Hit_family']], left_on='Taxon',right_on='PTU', how='left')
-    # nodes=nodes.drop(columns='PTU')
 
     nodes['Taxonomy']=nodes.apply(lambda row: row.family if row.Domain=='MAG' else None, axis=1)
 
@@ -140,8 +132,6 @@ nodes.to_csv('/'.join([wdir,'results/Nodes_network_crisprfree.csv']),index=False
 
 #Add how many individuals each connection is detected in
 
-edges=pd.read_csv('/'.join([wdir,'results/Edges_network_crisprfree.csv']))
-
 numpairs=pd.read_csv('/'.join([wdir,'results/Interactions_counts_by_spacer_and_indiv.csv']))
 numpairs=numpairs.rename(columns={'pair':'Pair'})
 
@@ -160,26 +150,3 @@ filt_nodes=filt_nodes.merge(nodes[['Taxon','status']], on='Taxon', how='left')
 
 filt_edges.to_csv('/'.join([wdir,'results/Edges_network_atleast2MAG_CF.csv']),index=False)
 filt_nodes.to_csv('/'.join([wdir,'results/Nodes_network_atleast2MAG_CF.csv']),index=False)
-
-#Keep only those interactions that are deceted in 5 individuals or more
-filt_edges=filt_edges.loc[filt_edges['5orMore']=='Yes']
-filt_nodes=make_nodes(filt_edges,2)
-filt_nodes=filt_nodes.merge(nodes[['Taxon','status']], on='Taxon', how='left')
-
-filt_edges.to_csv('/'.join([wdir,'results/Edges_network_atleast2MAG_CrisprF_5orMore.csv']),index=False)
-filt_nodes.to_csv('/'.join([wdir,'results/Nodes_network_atleast2MAG_CrisprF_5orMore.csv']),index=False)
-
-
-#Keep only those conncentions that are detected in more than one individual
-filt_edges=filt_edges.query('NumInd>1')
-filt_nodes=make_nodes(filt_edges,2)
-filt_nodes=filt_nodes.merge(nodes[['Taxon','status']], on='Taxon', how='left')
-
-filt_edges.to_csv('/'.join([wdir,'results/Edges_network_atleast2MAG_CrisprF_2orMore.csv']),index=False)
-filt_nodes.to_csv('/'.join([wdir,'results/Nodes_network_atleast2MAG_CrisprF_2orMore.csv']),index=False)
-
-#Make a summary
-tax='MAG'
-qtax=nodes.loc[nodes['Domain']==tax]
-len(qtax['Taxon'].unique().tolist())
-

@@ -22,7 +22,7 @@ samples=pyr.read_r('/'.join([wdir, 'participant_data/sample_meta.Rds']))[None]
 samples=samples.drop(columns=['richness', 'shannon', 'invsimpson'])
 alpha_div=pd.read_csv('/'.join([wdir, 'datasets/MAGs_AlphaDiv.tsv']), sep='\t')
 
-samples=samples.merge(alpha_div[['sample_id','kjonn','age_cat','age_invitation','senter','ObsSp','Shannon','InvSimpson']],on='sample_id',how='left')
+samples=samples.merge(alpha_div[['sample_id','sex','age_cat','age_invitation','center','ObsSp','Shannon','InvSimpson']],on='sample_id',how='left')
 
 #Add info on CRISPR proximity
 samples['NumCRISPR_All']=None
@@ -283,7 +283,7 @@ h_st,pval=kruskal_group(nfcassettes,'Cas_proximity','ContigLength')
 meta=pd.read_csv('/'.join([wdir,'participant_data/screening_data.tsv']), sep='\t')
 meta['beforeBL'] = pd.Categorical(meta['beforeBL'], categories=['Yes','No'], ordered=True)
 
-samples=samples.merge(meta[['deltaker_id','beforeBL']], on='deltaker_id', how='left')
+samples=samples.merge(meta[['participant_id','beforeBL']], on='participant_id', how='left')
 
 def diff_adjusted(samples, y, col, adj):
     

@@ -20,8 +20,7 @@ from skbio.stats.ordination import pcoa
 
 wdir='PATH_TO_MANUS_FOLDER' #set working directory
 prefix='MAGs' #prefix to be used for the output files
-#prefix='vOTUs' #prefix to be used for the output files
-#prefix='PTUs'
+
 #Load metadata--------------------------------------------------------------
 
 ####NB that beforeBL variable codes for a/b use 4 months prior to baseline, not if it was at ANY time before baseline  
@@ -32,7 +31,7 @@ meta['kjonn'] = pd.Categorical(meta['kjonn'], categories=['Male','Female'], orde
 meta['age_cat'] = pd.Categorical(meta['age_cat'], categories=['50-59','60-69','>=70'], ordered=True)
 
 samples=pyr.read_r('/'.join([wdir, 'participant_data/sample_meta.Rds']))[None]
-samples=samples.merge(meta[['deltaker_id','beforeBL','age_cat','kjonn','senter']],on='deltaker_id',how='left')
+samples=samples.merge(meta[['participant_id','beforeBL','age_cat','sex','center']],on='participant_id',how='left')
 
 #------------------------------------------------------------------------------------------------------------
 #BETA DIVERSITY
@@ -118,7 +117,7 @@ def calc_permanova(skdm,groups,cols):
     return perm_res
     
 distances=['BrayCurtis','Jaccard']
-cols=['kjonn','age_cat','beforeBL','senter']
+cols=['sex','age_cat','beforeBL','center']
 
 for p in ['MAGs','vOTUs','PTUs', 'Combined']:
     for d in distances:
