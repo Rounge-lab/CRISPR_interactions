@@ -9,7 +9,6 @@ Find how many spacer clusters are shared or new in an individual
 import pandas as pd
 import pyreadr as pyr
 import seaborn as sb
-from scipy.stats import pearsonr
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 import random
@@ -31,6 +30,8 @@ votulen=pd.read_csv('/'.join([wdir, 'datasets/vOTUs_lengths.csv']), sep=',')
 
 reltabs={'PTUs':PTUtab,'vOTUs':votutab}
 lengths={'PTUs':PTUlen,'vOTUs':votulen}
+
+samples=pyr.read_r('/'.join([wdir, 'participant_data/sample_meta.Rds']))[None]
 
 def individuality_target(tartype, reltabs=reltabs, lengths=lengths, spacers=spacers):
     tarsp=spacers.dropna(subset=tartype)

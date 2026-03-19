@@ -8,7 +8,6 @@ Make files for cytoscape network visualization
 
 import pandas as pd
 import seaborn as sb
-import numpy as np
 
 wdir='PATH_TO_MANUS_FOLDER'
 spacers=pd.read_csv('/'.join([wdir,'datasets/spacers_manus_table_new.csv']), sep='\t')

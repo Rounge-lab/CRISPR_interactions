@@ -82,8 +82,6 @@ for x,y,z in list(combinations(dbs,3)):
     
 final=pd.concat([final,IntDatabase])
 
-final=pd.concat([numclus,final])
-
 final.to_csv('PATH_TO_MANUS_FOLDER/results/Spacers_Intersect_databases_all_3intONLY.csv',index=False, sep='\t')
 print('Done with intersection')
 

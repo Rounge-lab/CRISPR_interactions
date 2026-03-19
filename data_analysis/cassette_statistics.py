@@ -19,10 +19,6 @@ crdir='PATH_TO/cctyper_snakemake_wf/data'
 wdir='PATH_TO_MANUS_FOLDER' #set working directory
 
 samples=pyr.read_r('/'.join([wdir, 'participant_data/sample_meta.Rds']))[None]
-samples=samples.drop(columns=['richness', 'shannon', 'invsimpson'])
-alpha_div=pd.read_csv('/'.join([wdir, 'datasets/MAGs_AlphaDiv.tsv']), sep='\t')
-
-samples=samples.merge(alpha_div[['sample_id','sex','age_cat','age_invitation','center','ObsSp','Shannon','InvSimpson']],on='sample_id',how='left')
 
 #Add info on CRISPR proximity
 samples['NumCRISPR_All']=None
