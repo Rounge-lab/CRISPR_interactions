@@ -28,7 +28,7 @@ for db in dbs:
     blastres=pd.concat([blastres,file])
 
 
-#Load the list of spacer clusters from the manuscript dataset (1813 samples)
+#Load the list of spacer clusters from the manuscript dataset 
 
 clusters=pd.read_csv('PATH_TO_MANUS_FOLDER/datasets/spacers_manus_table.csv',sep='\t')
 
@@ -86,8 +86,6 @@ final=pd.concat([numclus,final])
 
 final.to_csv('PATH_TO_MANUS_FOLDER/results/Spacers_Intersect_databases_all_3intONLY.csv',index=False, sep='\t')
 print('Done with intersection')
-
-final=pd.read_csv('PATH_TO_MANUS_FOLDER/results/Spacers_Intersect_databases_all_3intONLY.csv', sep='\t')
 
 ##Make an UpSet plot
 print('Making UpSet plot')

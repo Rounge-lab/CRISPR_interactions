@@ -12,9 +12,8 @@ from statannotations.Annotator import Annotator
 from itertools import combinations as comb
 from statsmodels.stats.multitest import multipletests
 import scipy.stats as stats
-from scipy.stats import binomtest
 
-#Load all needed data
+#Load the data
 wdir="PATH_TO_MANUS_FOLDER"
 
 spacers=pd.read_csv('/'.join([wdir,'datasets/spacers_manus_table_new.csv']),sep='\t')
@@ -101,7 +100,6 @@ sb.lineplot(x=[0, 260], y=[0, 260], linestyle="--", color='#bbbbbb')
 ax.set(xlabel='Number of spacers in a cluster', ylabel='Number of spacers in MAGs')
 plt.savefig('/'.join([wdir,'results/SpacersHeterogeneity.pdf']))
 
-########
 #get clusters that are detected in over 10% of the population (n=103 individuals)
 
 prevclus=clustmap.query('NumIndividuals>=103')
@@ -111,9 +109,9 @@ magtax=pd.read_csv('/'.join([wdir,'datasets/MAG_taxonomy_full.tsv']),sep=',')
 knownmag=knownmag.merge(magtax,on='MAG',how='left')
 prevclusbymag=knownmag.groupby(['Cluster','MAG'])['species'].value_counts().reset_index()
 
-#####
+
 #Assess spacer heterogeneity in mOTUs
-#####
+
 mags=spacers[['MAG','Cluster','Sample']].drop_duplicates()
 nummags=mags[['MAG','Sample']].drop_duplicates()
 nummags=nummags['MAG'].value_counts().reset_index()
@@ -198,32 +196,4 @@ annotator.configure(test='Kruskal', text_format='star', comparisons_correction='
                     line_height=0.01,line_offset_to_group=0.01,line_offset=0.0, line_width=0.5)
 annotator.apply_and_annotate()
 
-##Find B.animalis spacer-samples
-banim=spacers.loc[spacers['MAG']=='mOTU1812']
-banim=banim['participant_id'].drop_duplicates().reset_index()
-banim=banim.rename(columns={'participant_id':'deltaker_id'})
-
-diet=pd.read_csv('PATH_TO_FFQ_DATA/foodgroups_n1616.csv', sep=';')
-
-banim=banim.merge(diet[['deltaker_id','CULTB']], on='id',how='left')
-banim.to_csv('/'.join([wdir,'results/Banimalis_ids_Biola.csv']),sep='\t',index=False)
-
-col='CULTB'
-yoghurt=diet[['id',col]]
-deltid=deltid.loc[deltid['deltaker_id'].isin(spacers['participant_id'].unique().tolist())]
-yoghurt['banim']=yoghurt['id'].apply(lambda row: 'Yes' if row in banim['id'].tolist() else 'No')
-yoghurt=yoghurt.loc[yoghurt['id'].isin(deltid['id'].tolist())]
-
-#remove those for who we don't have metagenomic data
-
-sb.boxplot(yoghurt, x='CULTB',y='banim', color='#5fc0bf')
-
-h_st,pval=kruskal_group(yoghurt,'banim',col)
-
-yoghurt['bin']=yoghurt[col].apply(lambda row:'ja' if row>0 else 'nei')
-
-yoghurt.to_csv('/'.join([wdir,'results/CultBiola_all_ids.csv']),sep='\t',index=False)
-
-cr=pd.crosstab(yoghurt['bin'],yoghurt['banim'])
-
-binomtest(cr.loc['ja','Yes'],33,p=cr.loc['ja','No']/cr.sum(axis=0)[0],alternative='two-sided')
+plt.savefig('/'.join([wdir,'results/mOTU_spacers_heterogenity_families.pdf']))
