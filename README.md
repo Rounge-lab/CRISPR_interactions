@@ -1,6 +1,6 @@
 # CRISPR_interactions
 
-This is the collection of scripts used for the **"CRISPR-Cas immune repertoires as an ecological record of bacterial interactions with mobile genetic elements in the human gut"** by Avershina et al, 2026 [preprint](https://www.biorxiv.org)
+This is the collection of scripts used for the **"CRISPR-Cas immune repertoires as an ecological record of bacterial interactions with mobile genetic elements in the human gut"** by Avershina et al, 2026 [preprint](https://www.biorxiv.org/content/10.64898/2026.03.18.712547v1.full.pdf+html)
 
 ---
 
